@@ -11,20 +11,21 @@
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #f6f4ef;
+    --bg: #eef2f5;
     --panel: #ffffff;
-    --panel-soft: #fbfaf7;
-    --ink: #1e2328;
-    --muted: #6d7278;
-    --line: #ded8ce;
-    --line-strong: #c9c1b5;
-    --accent: #c84b31;
-    --blue: #2f76b7;
-    --green: #23835a;
-    --amber: #b7781f;
-    --violet: #7552a8;
-    --teal: #247b83;
-    --shadow: 0 10px 28px rgba(30,35,40,0.12);
+    --panel-soft: #f8fafc;
+    --ink: #17202a;
+    --muted: #637083;
+    --line: #d9e0e8;
+    --line-strong: #aebbc9;
+    --accent: #1f6feb;
+    --accent-soft: #e8f1ff;
+    --blue: #2563eb;
+    --green: #15946f;
+    --amber: #b76e00;
+    --violet: #7c3aed;
+    --teal: #0f8b8d;
+    --shadow: 0 14px 34px rgba(15,23,42,0.12);
     --header-h: 58px;
     --radius: 8px;
   }
@@ -62,8 +63,9 @@
   }
 
   .topbar {
-    background: var(--panel);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     border-bottom: 1px solid var(--line);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.78), 0 10px 28px rgba(15,23,42,0.06);
     display: grid;
     grid-template-columns: minmax(180px, 1fr) auto minmax(190px, 1fr);
     align-items: center;
@@ -81,6 +83,7 @@
     font-size: 16px;
     font-weight: 700;
     line-height: 1.2;
+    color: #111827;
   }
 
   .brand-subtitle {
@@ -98,7 +101,7 @@
     grid-auto-flow: column;
     gap: 4px;
     padding: 4px;
-    background: #ece6dc;
+    background: #e8edf3;
     border: 1px solid var(--line);
     border-radius: var(--radius);
   }
@@ -106,7 +109,7 @@
   .view-tab {
     border: 0;
     background: transparent;
-    color: #3f454b;
+    color: #465363;
     min-width: 76px;
     height: 34px;
     padding: 0 12px;
@@ -116,9 +119,9 @@
   }
 
   .view-tab.active {
-    background: var(--panel);
+    background: #ffffff;
     color: var(--accent);
-    box-shadow: 0 1px 4px rgba(30,35,40,0.12);
+    box-shadow: 0 1px 4px rgba(15,23,42,0.12);
   }
 
   .top-actions {
@@ -131,7 +134,8 @@
 
   .file-btn,
   .icon-btn,
-  .select {
+  .select,
+  .source-pill {
     border: 1px solid var(--line);
     background: var(--panel);
     color: var(--ink);
@@ -147,9 +151,31 @@
 
   .file-btn:hover,
   .icon-btn:hover,
-  .select:hover {
+  .select:hover,
+  .source-pill:hover {
     border-color: var(--line-strong);
     background: var(--panel-soft);
+  }
+
+  .file-btn:focus-visible,
+  .icon-btn:focus-visible,
+  .select:focus-visible,
+  .chip:focus-visible,
+  .view-tab:focus-visible,
+  .photo-card:focus-visible {
+    outline: 3px solid rgba(31,111,235,0.22);
+    outline-offset: 2px;
+  }
+
+  .source-pill {
+    display: inline-grid;
+    place-items: center;
+    min-width: 88px;
+    padding: 0 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
   }
 
   .icon-btn {
@@ -167,7 +193,7 @@
     min-width: 74px;
     padding: 0 10px;
     border-radius: 6px;
-    background: #20252a;
+    background: #111827;
     color: white;
     font-family: 'DM Mono', monospace;
     font-size: 12px;
@@ -246,7 +272,7 @@
   .view-stage {
     min-height: 0;
     position: relative;
-    background: #eee9df;
+    background: #e6ebf1;
   }
 
   .view {
@@ -283,7 +309,7 @@
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    box-shadow: 0 1px 0 rgba(30,35,40,0.03);
+    box-shadow: 0 1px 0 rgba(15,23,42,0.03);
     min-width: 0;
   }
 
@@ -330,6 +356,16 @@
     border: 1px solid var(--line);
     border-radius: var(--radius);
     background: var(--panel-soft);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--accent);
   }
 
   .metric-value {
@@ -370,7 +406,7 @@
   .bar-track {
     height: 10px;
     border-radius: 999px;
-    background: #ebe5dc;
+    background: #e6edf5;
     overflow: hidden;
   }
 
@@ -482,9 +518,9 @@
     min-height: 0;
     position: relative;
     background:
-      linear-gradient(rgba(30,35,40,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(30,35,40,0.05) 1px, transparent 1px),
-      #f2eee7;
+      linear-gradient(rgba(20,48,80,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,48,80,0.07) 1px, transparent 1px),
+      #f4f7fb;
     background-size: 34px 34px;
   }
 
@@ -495,22 +531,22 @@
   }
 
   .net-link {
-    stroke: rgba(70,75,80,0.22);
+    stroke: rgba(70,82,96,0.25);
     stroke-width: 1;
   }
 
   .net-node {
     cursor: pointer;
-    filter: drop-shadow(0 3px 7px rgba(30,35,40,0.16));
+    filter: drop-shadow(0 3px 7px rgba(15,23,42,0.16));
   }
 
   .net-label {
     pointer-events: none;
-    fill: #252a30;
+    fill: #17202a;
     font-size: 11px;
     font-weight: 700;
     paint-order: stroke;
-    stroke: rgba(246,244,239,0.85);
+    stroke: rgba(248,250,252,0.92);
     stroke-width: 3px;
   }
 
@@ -531,12 +567,13 @@
 
   .photo-card:hover {
     border-color: var(--line-strong);
-    box-shadow: 0 8px 18px rgba(30,35,40,0.10);
+    box-shadow: 0 8px 18px rgba(15,23,42,0.10);
+    transform: translateY(-1px);
   }
 
   .photo-thumb {
     aspect-ratio: 4 / 3;
-    background: #e7e1d7;
+    background: #e9eef5;
     display: grid;
     place-items: center;
     color: var(--muted);
@@ -652,7 +689,7 @@
 
   .detail-photo {
     aspect-ratio: 4 / 3;
-    background: #e7e1d7;
+    background: #e9eef5;
     display: grid;
     place-items: center;
     color: var(--muted);
@@ -725,13 +762,13 @@
     font-weight: 700;
   }
 
-  .tag.ja { background: #e8f2fb; border-color: #bdd5ec; color: #1f5b91; }
-  .tag.zh { background: #fff2d9; border-color: #e2bd78; color: #855612; }
-  .tag.ko { background: #e5f5ee; border-color: #9ad1b8; color: #1a6848; }
-  .tag.en { background: #eee8f7; border-color: #c9b9e3; color: #5c4188; }
-  .tag.other { background: #eceff0; border-color: #cfd7d9; color: #4d575b; }
-  .tag.source-top { background: #fae9df; border-color: #e7b59e; color: #95442d; }
-  .tag.source-bottom { background: #e7f4e8; border-color: #9ccd9f; color: #236d39; }
+  .tag.ja { background: #e8f1ff; border-color: #b8cff8; color: #174ea6; }
+  .tag.zh { background: #fff4db; border-color: #e9c676; color: #82520c; }
+  .tag.ko { background: #e6f6ef; border-color: #98d3bd; color: #116149; }
+  .tag.en { background: #f0eaff; border-color: #c9b8f2; color: #5934a3; }
+  .tag.other { background: #eef2f6; border-color: #cfd8e3; color: #465363; }
+  .tag.source-top { background: #e8f1ff; border-color: #b8cff8; color: #174ea6; }
+  .tag.source-bottom { background: #e6f6ef; border-color: #98d3bd; color: #116149; }
 
   .field-list {
     margin-top: 8px;
@@ -775,12 +812,12 @@
     height: 13px;
     border-radius: 50%;
     border: 2px solid white;
-    box-shadow: 0 2px 7px rgba(30,35,40,0.32);
+    box-shadow: 0 2px 7px rgba(15,23,42,0.32);
   }
 
   .marker-dot.active {
     transform: scale(1.55);
-    border-color: #20252a;
+    border-color: #111827;
   }
 
   .leaflet-popup-content-wrapper {
@@ -845,7 +882,7 @@
       transform: translateY(calc(100% - 48px));
       transition: transform 0.22s ease;
       border-top: 1px solid var(--line);
-      box-shadow: 0 -12px 30px rgba(30,35,40,0.16);
+      box-shadow: 0 -12px 30px rgba(15,23,42,0.16);
     }
 
     .side-panel.open {
@@ -924,6 +961,10 @@
       font-size: 11px;
     }
 
+    .source-pill {
+      display: none;
+    }
+
     .view-tab {
       min-width: 68px;
       padding: 0 8px;
@@ -966,6 +1007,7 @@
 
     <div class="top-actions">
       <button class="file-btn" onclick="document.getElementById('csv-file-input').click()">CSVを開く</button>
+      <span class="source-pill" id="data-source-badge" title="現在のデータソース">data_ai.csv</span>
       <button class="icon-btn mobile-detail-toggle" id="mobile-detail-toggle" title="詳細">i</button>
       <span class="count-pill" id="count-badge">0</span>
       <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="loadCSVFile(event)">
@@ -1108,13 +1150,15 @@ const FIELD = {
   memo: ['備考'],
 };
 
-const COLORS = ['#2f76b7', '#b7781f', '#23835a', '#7552a8', '#c84b31', '#247b83', '#6d7278', '#8a623d'];
+const DEFAULT_CSV_PATH = 'data_ai.csv';
+const FALLBACK_CSV_PATH = 'data.csv';
+const COLORS = ['#2563eb', '#b76e00', '#15946f', '#7c3aed', '#d94841', '#0f8b8d', '#637083', '#9a5d24'];
 const LANG_COLORS = {
-  '日本語': '#2f76b7',
-  '中文': '#b7781f',
-  '韓国語': '#23835a',
-  '英語': '#7552a8',
-  'その他': '#6d7278',
+  '日本語': '#2563eb',
+  '中文': '#b76e00',
+  '韓国語': '#15946f',
+  '英語': '#7c3aed',
+  'その他': '#637083',
 };
 
 let map;
@@ -1433,7 +1477,7 @@ function renderStats() {
   `).join('');
 
   renderBars('lang-bars', countBy(rows, row => getLang(row)), value => getColorForValue(value), 8);
-  renderBars('carrier-bars', countBy(rows, row => first(row, FIELD.carrier)), () => '#247b83', 7);
+  renderBars('carrier-bars', countBy(rows, row => first(row, FIELD.carrier)), () => '#0f8b8d', 7);
   renderDonut(countBy(rows, row => first(row, FIELD.source)));
   renderTimeline(rows);
 }
@@ -1462,7 +1506,7 @@ function renderDonut(entries) {
   svg.innerHTML = '';
 
   if (!total) {
-    svg.innerHTML = '<circle cx="60" cy="60" r="42" fill="none" stroke="#ded8ce" stroke-width="18"></circle>';
+    svg.innerHTML = '<circle cx="60" cy="60" r="42" fill="none" stroke="#d9e0e8" stroke-width="18"></circle>';
     legend.innerHTML = '<div class="panel-note">No data</div>';
     return;
   }
@@ -1489,7 +1533,7 @@ function renderDonut(entries) {
   center.setAttribute('text-anchor', 'middle');
   center.setAttribute('font-size', '18');
   center.setAttribute('font-family', 'DM Mono, monospace');
-  center.setAttribute('fill', '#1e2328');
+  center.setAttribute('fill', '#17202a');
   center.textContent = total;
   svg.appendChild(center);
 
@@ -1586,18 +1630,18 @@ function renderNetwork() {
   }
 
   rows.forEach(row => {
-    const sign = node(`sign:${getId(row)}`, getId(row), 'sign', '#22272d', 1);
+    const sign = node(`sign:${getId(row)}`, getId(row), 'sign', '#111827', 1);
     const lang = node(`lang:${getLang(row)}`, getLang(row), 'lang', getColorForValue(getLang(row)), 2);
     links.push([sign, lang]);
 
     const source = first(row, FIELD.source);
-    if (source) links.push([sign, node(`source:${source}`, source, 'source', source.includes('bottom') ? '#23835a' : '#c84b31', 1.5)]);
+    if (source) links.push([sign, node(`source:${source}`, source, 'source', source.includes('bottom') ? '#15946f' : '#1f6feb', 1.5)]);
 
     const actor = first(row, FIELD.actor);
-    if (actor) links.push([sign, node(`actor:${actor}`, actor, 'actor', '#247b83', 1.2)]);
+    if (actor) links.push([sign, node(`actor:${actor}`, actor, 'actor', '#0f8b8d', 1.2)]);
 
     const carrier = first(row, FIELD.carrier);
-    if (carrier) links.push([sign, node(`carrier:${carrier}`, carrier, 'carrier', '#7552a8', 1)]);
+    if (carrier) links.push([sign, node(`carrier:${carrier}`, carrier, 'carrier', '#7c3aed', 1)]);
   });
 
   runLayout(nodes, links, width, height);
@@ -1683,7 +1727,15 @@ function runLayout(nodes, links, width, height) {
   }
 }
 
-function loadCSV(csvText) {
+function setDataSourceLabel(label) {
+  const badge = document.getElementById('data-source-badge');
+  if (badge) {
+    badge.textContent = label;
+    badge.title = `現在のデータソース: ${label}`;
+  }
+}
+
+function loadCSV(csvText, sourceLabel = 'manual CSV') {
   const result = Papa.parse(csvText, { header: true, skipEmptyLines: true });
   allRows = result.data.filter(row => Object.values(row).some(v => norm(v)));
   filteredRows = allRows.slice();
@@ -1696,13 +1748,14 @@ function loadCSV(csvText) {
   document.getElementById('detail-panel').innerHTML = '';
   buildFilters();
   applyFilters();
+  setDataSourceLabel(sourceLabel);
 }
 
 function loadCSVFile(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => loadCSV(e.target.result);
+  reader.onload = e => loadCSV(e.target.result, file.name);
   reader.readAsText(file, 'UTF-8');
   event.target.value = '';
 }
@@ -1713,7 +1766,25 @@ NKG-S001-a,reviewed,NKG-20260601-001,NKG-001.jpg,,35.612300,139.345600,2026-06-0
 NKG-S002-a,reviewed,NKG-20260601-002,NKG-002.jpg,,35.612500,139.345800,2026-06-01 10:45,手書き営業時間メモ,日本語,—,—,個人/非正式,貼付物(手書き),常設,完全可読,bottom-up(ローカル自作),歩行可読(<5m),電柱・目線高さ,単言語型,本地住民,手書き,営業時間メモ
 NKG-S003-a,reviewed,NKG-20260601-003,NKG-003.jpg,,35.613000,139.346100,2026-06-01 11:02,バス停多言語案内,日本語,中文・韓国語,—,行政/公共機関,建物固定(掲示板),常設,完全可読,top-down(標準化),近距可読(5-15m),バス停掲示板,補完型,観光客・外国人,専門印刷,観光客向け案内
 NKG-S004-a,pending,NKG-20260601-004,NKG-004.jpg,,35.612800,139.346200,2026-06-01 11:15,屋台車側面,日本語,—,英語(ブランド名),商業,移動物体(停車中),臨時/季節的,部分可読,bottom-up(ローカル自作),歩行可読(<5m),駐車場内・車両側面,象徴型,本地住民,半専門(印刷),移動販売`;
-  loadCSV(sampleCSV);
+  loadCSV(sampleCSV, 'sample data');
+}
+
+function loadDefaultCSV() {
+  fetch(DEFAULT_CSV_PATH)
+    .then(response => {
+      if (!response.ok) throw new Error(`${DEFAULT_CSV_PATH} not found`);
+      return response.text();
+    })
+    .then(text => loadCSV(text, DEFAULT_CSV_PATH))
+    .catch(() => {
+      fetch(FALLBACK_CSV_PATH)
+        .then(response => {
+          if (!response.ok) throw new Error(`${FALLBACK_CSV_PATH} not found`);
+          return response.text();
+        })
+        .then(text => loadCSV(text, FALLBACK_CSV_PATH))
+        .catch(loadFallbackData);
+    });
 }
 
 document.querySelectorAll('.view-tab').forEach(btn => {
@@ -1734,13 +1805,7 @@ window.addEventListener('resize', () => {
 });
 
 initMap();
-fetch('data.csv')
-  .then(response => {
-    if (!response.ok) throw new Error('data.csv not found');
-    return response.text();
-  })
-  .then(loadCSV)
-  .catch(loadFallbackData);
+loadDefaultCSV();
 </script>
 </body>
 </html>
