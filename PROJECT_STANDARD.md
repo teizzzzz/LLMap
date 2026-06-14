@@ -20,6 +20,7 @@
 | 文件/目录 | 职责 | 标准说明 |
 |---|---|---|
 | `启动.bat` | Windows 一键启动本地 HTTP 服务并打开地图 | 服务端口默认为 `8080`，入口为 `index.html` |
+| `launcher.py` | ASCII 启动入口 | 包装调用 `ランチャー.py`，避免 Windows batch 直接引用日文文件名失败 |
 | `ランチャー.py` | 图形化启动器 | 管理本地服务器，打开地图、裁剪、复核、重命名、合并、AI 工具 |
 | `ll_rename_gui.py` | 照片重命名与初始 CSV 生成 | 读取 EXIF 时间/GPS，输出 `photos/`、`thumbs/`、`data.csv` |
 | `crop_tool.html` | 单张照片 sign 裁剪工具 | 从全景图裁出多个 sign 图片，并导出 crop CSV 行 |
@@ -56,6 +57,7 @@ mapv2.0/
   index.html
   review_tool_v2.html
   crop_tool.html
+  launcher.py
   ランチャー.py
   ll_rename_gui.py
   ll_ai_judge_gui.py
@@ -362,6 +364,7 @@ AI 判定阶段：
 - 裁剪图保存质量当前为 `0.92`。
 - 裁剪 ID 使用全景 `写真ID` 加 suffix。
 - 裁剪后应保留全景文件名，便于追溯。
+- `crop_tool.html` 支持单张图片导入，也支持通过文件夹导入批量图片，并用上一张/下一张导航。
 
 ## 10. 地图展示标准
 

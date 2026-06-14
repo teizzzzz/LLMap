@@ -37,14 +37,20 @@ echo Python: %PYTHON%
 echo フォルダ: %~dp0
 echo.
 
-:: ランチャーがあれば優先して起動する
-if exist "%~dp0ランチャー.py" (
-    echo ランチャーを起動しています...
-    start "" "%PYTHON%" "%~dp0ランチャー.py"
+:: ASCII入口を優先して起動する（非ASCIIファイル名の文字化け対策）
+if exist "%~dp0launcher.py" (
+    echo Launcher is starting...
+    "%PYTHON%" "%~dp0launcher.py"
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] Launcher failed to start.
+        pause
+        exit /b 1
+    )
     exit /b 0
 )
 
-echo [警告] ランチャー.py が見つかりません。地図サーバーを直接起動します。
+echo [警告] launcher.py が見つかりません。地図サーバーを直接起動します。
 echo.
 
 :: ポート8080が使用中かチェック

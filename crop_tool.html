@@ -210,8 +210,13 @@ h1 { font-size: 14px; font-weight: 700; color: var(--text); }
   </div>
   <div class="header-right">
     <button class="btn" onclick="document.getElementById('file-input').click()">📂 写真を開く</button>
+    <button class="btn" onclick="document.getElementById('folder-input').click()">📁 フォルダを開く</button>
+    <button class="btn" id="prev-img-btn" onclick="loadAdjacentImage(-1)" disabled>←</button>
+    <span class="mono" id="image-index-label"></span>
+    <button class="btn" id="next-img-btn" onclick="loadAdjacentImage(1)" disabled>→</button>
     <button class="btn btn-green" id="save-all-btn" onclick="saveAll()" disabled>💾 全件保存</button>
     <input type="file" id="file-input" accept="image/*" style="display:none" onchange="loadImage(event)">
+    <input type="file" id="folder-input" accept="image/*" webkitdirectory directory multiple style="display:none" onchange="loadFolder(event)">
   </div>
 </header>
 
@@ -284,6 +289,8 @@ h1 { font-size: 14px; font-weight: 700; color: var(--text); }
 // ── State ──
 let img = null;
 let imgFile = null;
+let imageFiles = [];
+let currentImageIndex = -1;
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
 let wrap = document.getElementById('canvas-wrap');
@@ -303,10 +310,45 @@ function csvEscape(value) {
   return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
+function isImageFile(file) {
+  return file && (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp)$/i.test(file.name));
+}
+
 // ── Load Image ──
 function loadImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const files = Array.from(event.target.files || []).filter(isImageFile);
+  if (!files.length) return;
+  imageFiles = files;
+  currentImageIndex = 0;
+  loadImageFile(files[0]);
+  event.target.value = '';
+}
+
+function loadFolder(event) {
+  const files = Array.from(event.target.files || [])
+    .filter(isImageFile)
+    .sort((a, b) => (a.webkitRelativePath || a.name).localeCompare(b.webkitRelativePath || b.name, 'ja'));
+  if (!files.length) {
+    alert('画像ファイルが見つかりませんでした');
+    event.target.value = '';
+    return;
+  }
+  imageFiles = files;
+  currentImageIndex = 0;
+  loadImageFile(files[0]);
+  event.target.value = '';
+}
+
+function loadAdjacentImage(dir) {
+  if (!imageFiles.length) return;
+  const next = currentImageIndex + dir;
+  if (next < 0 || next >= imageFiles.length) return;
+  if (crops.length && !confirm('現在のクロップ一覧はクリアされます。移動しますか？')) return;
+  currentImageIndex = next;
+  loadImageFile(imageFiles[currentImageIndex]);
+}
+
+function loadImageFile(file) {
   imgFile = file;
 
   const reader = new FileReader();
@@ -326,6 +368,7 @@ function loadImage(event) {
       document.getElementById('file-name').textContent = file.name;
       document.getElementById('file-info').textContent = `${image.width} × ${image.height} px`;
       document.getElementById('crop-btn').disabled = true;
+      updateImageNav();
 
       // ベースIDを自動設定
       const stem = file.name.replace(/\.[^.]+$/, '');
@@ -334,7 +377,14 @@ function loadImage(event) {
     image.src = e.target.result;
   };
   reader.readAsDataURL(file);
-  event.target.value = '';
+}
+
+function updateImageNav() {
+  const hasList = imageFiles.length > 1;
+  document.getElementById('prev-img-btn').disabled = !hasList || currentImageIndex <= 0;
+  document.getElementById('next-img-btn').disabled = !hasList || currentImageIndex >= imageFiles.length - 1;
+  document.getElementById('image-index-label').textContent =
+    imageFiles.length ? `${currentImageIndex + 1} / ${imageFiles.length}` : '';
 }
 
 function fitCanvas() {
