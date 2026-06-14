@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+.env
+.env.*
+*.key
+
+.DS_Store
+Thumbs.db
+
+mapv2.0.zip

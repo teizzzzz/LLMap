@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>言語景観マップ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #f5f2ed;
+    --panel: #ffffff;
+    --text: #1a1a1a;
+    --text-sub: #666;
+    --accent: #c84b31;
+    --border: #e0dbd3;
+    --tag-bg: #f0ece5;
+    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 1000;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: 300;
+  }
+
+  .count-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .header-btn {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .header-btn:hover { background: var(--tag-bg); }
+
+  /* ── Layout ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Map ── */
+  #map {
+    flex: 1;
+    z-index: 1;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 340px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sidebar-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-sub);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .sidebar-empty .icon {
+    font-size: 40px;
+    opacity: 0.3;
+  }
+
+  .sidebar-empty p {
+    font-size: 13px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ── Detail Panel ── */
+  .detail {
+    flex: 1;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .detail.active { display: block; }
+
+  .detail-photo {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    background: var(--tag-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-sub);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .detail-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .photo-placeholder {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--tag-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-sub);
+  }
+
+  .photo-placeholder span { font-size: 28px; opacity: 0.4; }
+  .photo-placeholder p { font-size: 11px; font-family: 'DM Mono', monospace; }
+
+  .detail-body { padding: 20px; }
+
+  .detail-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .detail-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .detail-location {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .detail-section {
+    margin-bottom: 16px;
+  }
+
+  .detail-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 500;
+    background: var(--tag-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .tag.lang-ja { background: #e8f4fd; border-color: #b3d9f5; color: #1a5276; }
+  .tag.lang-zh { background: #fef9e7; border-color: #f9e79f; color: #784212; }
+  .tag.lang-ko { background: #eafaf1; border-color: #a9dfbf; color: #145a32; }
+  .tag.lang-en { background: #f4ecf7; border-color: #d7bde2; color: #4a235a; }
+  .tag.top-down { background: #fdf2e9; border-color: #f0b27a; color: #784212; }
+  .tag.bottom-up { background: #e9f7ef; border-color: #82e0aa; color: #1e8449; }
+
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-label {
+    color: var(--text-sub);
+    font-weight: 400;
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+
+  .field-value {
+    color: var(--text);
+    font-weight: 500;
+    text-align: right;
+    font-size: 11px;
+  }
+
+  .memo-box {
+    background: var(--tag-bg);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+  }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+
+  .filter-bar label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-sub);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .chip {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--tag-bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--text);
+  }
+
+  .chip:hover { background: var(--border); }
+  .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ── Custom marker ── */
+  .marker-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  /* Scrollbar */
+  .detail::-webkit-scrollbar { width: 4px; }
+  .detail::-webkit-scrollbar-track { background: transparent; }
+  .detail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Leaflet overrides */
+  .leaflet-popup-content-wrapper {
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>言語景観マップ</h1>
+    <span class="subtitle">Linguistic Landscape Field Records</span>
+  </div>
+  <div class="header-right">
+    <button class="header-btn" onclick="document.getElementById('csv-file-input').click()">CSVを開く</button>
+    <span class="count-badge" id="count-badge">0 件</span>
+    <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="loadCSVFile(event)">
+  </div>
+</header>
+
+<div class="main">
+  <div id="map"></div>
+
+  <div class="sidebar">
+    <div class="filter-bar">
+      <label>主要言語でフィルター</label>
+      <div class="filter-chips" id="filter-chips">
+        <button class="chip active" data-filter="all">すべて</button>
+      </div>
+    </div>
+
+    <div class="sidebar-empty" id="sidebar-empty">
+      <div class="icon">📍</div>
+      <p>地図のピンをクリックすると<br>詳細情報が表示されます</p>
+    </div>
+
+    <div class="detail" id="detail-panel"></div>
+  </div>
+</div>
+
+<script>
+// ── Map init ──
+const map = L.map('map', {
+  center: [35.6123, 139.3456],
+  zoom: 16,
+  zoomControl: true
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  maxZoom: 19
+}).addTo(map);
+
+// ── Language colors ──
+const LANG_COLORS = {
+  '日本語': '#2980b9',
+  '中文':   '#e67e22',
+  '韓国語': '#27ae60',
+  '英語':   '#8e44ad',
+  'その他': '#7f8c8d',
+};
+
+function getLangColor(lang) {
+  for (const [key, color] of Object.entries(LANG_COLORS)) {
+    if (lang && lang.includes(key)) return color;
+  }
+  return '#95a5a6';
+}
+
+function getLangClass(lang) {
+  if (!lang) return '';
+  if (lang.includes('日本語')) return 'lang-ja';
+  if (lang.includes('中文')) return 'lang-zh';
+  if (lang.includes('韓国語')) return 'lang-ko';
+  if (lang.includes('英語')) return 'lang-en';
+  return '';
+}
+
+// ── Marker creation ──
+function makeIcon(color) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="marker-dot" style="background:${color}"></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
+}
+
+// ── State ──
+let allData = [];
+let markers = [];
+let activeFilter = 'all';
+let activeMarker = null;
+
+// ── Render detail panel ──
+function renderDetail(row) {
+  const panel = document.getElementById('detail-panel');
+  const empty = document.getElementById('sidebar-empty');
+
+  // Photo
+  const photoFile = row['写真ファイル名'] ? row['写真ファイル名'].trim() : '';
+  const photoHTML = photoFile && photoFile !== '—'
+    ? `<div class="detail-photo"><img src="photos/${photoFile}" alt="${row['名称'] || ''}" onerror="this.parentElement.innerHTML='<div class=\\'photo-placeholder\\'><span>📷</span><p>${photoFile}</p></div>'"></div>`
+    : `<div class="photo-placeholder"><span>📷</span><p>写真なし</p></div>`;
+
+  // Language tags
+  const langs = ['主要言語','補助言語','装飾的言語'].map(k => {
+    const v = row[k];
+    if (!v || v === '—') return '';
+    return `<span class="tag ${getLangClass(v)}">${v}</span>`;
+  }).join('');
+
+  // Source tag
+  const src = row['来源類型'] || '';
+  const srcClass = src.includes('top') ? 'top-down' : src.includes('bottom') ? 'bottom-up' : '';
+
+  panel.innerHTML = `
+    ${photoHTML}
+    <div class="detail-body">
+      <div class="detail-id">${row['SignID'] || row['ImageID'] || row['ID'] || '—'}</div>
+      <div class="detail-title">${row['名称'] || '名称不明'}</div>
+      <div class="detail-location">📍 ${row['位置描述'] || '—'}</div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">言語構成</div>
+        <div class="tag-group">${langs || '<span class="tag">—</span>'}</div>
+        <div class="field-row">
+          <span class="field-label">多言語関係</span>
+          <span class="field-value">${row['多言語関係'] || '—'}</span>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">属性</div>
+        <div class="field-row">
+          <span class="field-label">設置主体</span>
+          <span class="field-value">${row['設置主体'] || '—'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">担体類型</span>
+          <span class="field-value">${row['担体類型'] || '—'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">時間性</span>
+          <span class="field-value">${row['時間性'] || '—'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">可読性</span>
+          <span class="field-value">${row['可読性'] || '—'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">来源</span>
+          <span class="field-value"><span class="tag ${srcClass}" style="font-size:10px">${src || '—'}</span></span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">視認等級</span>
+          <span class="field-value">${row['視認等級'] || '—'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">想定受容者</span>
+          <span class="field-value">${row['想定受容者'] || '—'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">採集日時</span>
+          <span class="field-value">${row['採集日時'] || '—'}</span>
+        </div>
+      </div>
+
+      ${row['備考'] ? `
+      <div class="detail-section">
+        <div class="detail-section-title">採集者メモ</div>
+        <div class="memo-box">${row['備考']}</div>
+      </div>` : ''}
+    </div>
+  `;
+
+  empty.style.display = 'none';
+  panel.classList.add('active');
+}
+
+// ── Filter ──
+function applyFilter(lang) {
+  activeFilter = lang;
+  document.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === lang);
+  });
+
+  markers.forEach(({ marker, row }) => {
+    const show = lang === 'all' || (row['主要言語'] && row['主要言語'].includes(lang));
+    if (show) marker.addTo(map);
+    else map.removeLayer(marker);
+  });
+
+  document.getElementById('count-badge').textContent =
+    (lang === 'all' ? allData.length : allData.filter(r => r['主要言語'] && r['主要言語'].includes(lang)).length) + ' 件';
+}
+
+// ── Build filter chips ──
+function buildFilters(data) {
+  const langs = new Set();
+  data.forEach(r => { if (r['主要言語']) langs.add(r['主要言語']); });
+
+  const container = document.getElementById('filter-chips');
+  container.innerHTML = '<button class="chip active" data-filter="all">すべて</button>';
+  langs.forEach(lang => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.dataset.filter = lang;
+    btn.textContent = lang;
+    btn.style.borderColor = getLangColor(lang);
+    btn.addEventListener('click', () => applyFilter(lang));
+    container.appendChild(btn);
+  });
+
+  document.querySelector('[data-filter="all"]').addEventListener('click', () => applyFilter('all'));
+}
+
+// ── Load CSV ──
+function loadCSV(csvText) {
+  const result = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+  allData = result.data.filter(row => Object.values(row).some(v => String(v || '').trim()));
+
+  document.getElementById('count-badge').textContent = allData.length + ' 件';
+  buildFilters(allData);
+
+  const bounds = [];
+
+  allData.forEach(row => {
+    const lat = parseFloat(row['緯度']);
+    const lng = parseFloat(row['経度']);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const color = getLangColor(row['主要言語']);
+    const marker = L.marker([lat, lng], { icon: makeIcon(color) });
+
+    marker.on('click', () => {
+      if (activeMarker) {
+        activeMarker.setIcon(makeIcon(getLangColor(activeMarker._row['主要言語'])));
+      }
+      marker.setIcon(L.divIcon({
+        className: '',
+        html: `<div class="marker-dot" style="background:${color};transform:scale(1.6);border-color:${color}"></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+      }));
+      activeMarker = marker;
+      activeMarker._row = row;
+      renderDetail(row);
+      map.panTo([lat, lng]);
+    });
+
+    marker._row = row;
+    marker.addTo(map);
+    markers.push({ marker, row });
+    bounds.push([lat, lng]);
+  });
+
+  if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40] });
+  else if (bounds.length === 1) map.setView(bounds[0], 17);
+}
+
+// ── CSVファイルを手動で読み込む ──
+function loadCSVFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // 既存のマーカーをクリア
+    markers.forEach(({marker}) => map.removeLayer(marker));
+    markers = []; allData = [];
+    document.getElementById('filter-chips').innerHTML = '<button class="chip active" data-filter="all">すべて</button>';
+    document.getElementById('detail-panel').classList.remove('active');
+    document.getElementById('sidebar-empty').style.display = '';
+    loadCSV(e.target.result);
+  };
+  reader.readAsText(file, 'UTF-8');
+  event.target.value = '';
+}
+
+// ── Load data.csv (same folder) ──
+fetch('data.csv')
+  .then(r => r.text())
+  .then(loadCSV)
+  .catch(() => {
+    // Fallback: load sample data inline
+    const sampleCSV = `ID,名称,緯度,経度,採集日時,主要言語,補助言語,装飾的言語,設置主体,担体類型,時間性,可読性,来源類型,視認等級,位置描述,多言語関係,想定受容者,制作品質,写真ファイル名,備考
+NKG-001,PayPay決済ステッカー,35.612300,139.345600,2026-06-01 10:32,日本語,中文,英語(装飾),商業,貼付物(ステッカー),常設,完全可読,top-down(標準化),歩行可読(<5m),コンビニ入口左ガラス面,平行型,本地住民,専門印刷,NKG-001.jpg,PayPay/Alipay/LINE Pay対応ステッカー
+NKG-002,手書き営業時間メモ,35.612500,139.345800,2026-06-01 10:45,日本語,—,—,個人/非正式,貼付物(手書き),常設,完全可読,bottom-up(ローカル自作),歩行可読(<5m),電柱・目線高さ,単言語型,本地住民,手書き,NKG-002.jpg,手書き営業時間メモ
+NKG-003,バス停多言語案内,35.613000,139.346100,2026-06-01 11:02,日本語,中文・韓国語,—,行政/公共機関,建物固定(掲示板),常設,完全可読,top-down(標準化),近距可読(5-15m),バス停掲示板,補完型,観光客・外国人,専門印刷,NKG-003.jpg,多言語案内
+NKG-004,たこ焼き屋台,35.612800,139.346200,2026-06-01 11:15,日本語,—,英語(ブランド名),商業,移動物体(停車中),臨時,部分可読,bottom-up(ローカル自作),歩行可読(<5m),駐車場内・屋台車側面,象徴型,本地住民,半専門(印刷),NKG-004.jpg,たこ焼き屋台
+NKG-005,選挙ポスター,35.613200,139.346500,2026-06-01 11:30,日本語,—,—,行政/公共機関,貼付物(ポスター),臨時/季節的,完全可読,top-down(標準化),歩行可読(<5m),電柱・選挙ポスター掲示板,単言語型,本地住民,専門印刷,NKG-005.jpg,選挙ポスター`;
+    loadCSV(sampleCSV);
+  });
+</script>
+</body>
+</html>

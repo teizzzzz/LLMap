@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>言語景観 クロップツール</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg: #1a1a1a;
+  --panel: #242424;
+  --border: #333;
+  --text: #e0e0e0;
+  --sub: #666;
+  --accent: #c84b31;
+  --green: #27ae60;
+  --blue: #2980b9;
+  --tag: #2a2a2a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Header */
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.header-left { display: flex; align-items: baseline; gap: 10px; }
+h1 { font-size: 14px; font-weight: 700; color: var(--text); }
+.mono { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--sub); }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 11px; padding: 5px 12px;
+  border-radius: 2px; border: 1px solid var(--border);
+  cursor: pointer; background: var(--panel);
+  color: var(--text); transition: all 0.15s;
+}
+.btn:hover { background: var(--border); }
+.btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-accent:hover { background: #a83928; }
+.btn-green { background: var(--green); color: white; border-color: var(--green); }
+.btn-green:hover { background: #219a52; }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Main */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* Canvas area */
+.canvas-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: #111;
+  cursor: crosshair;
+}
+
+#canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  position: absolute;
+}
+
+.canvas-empty {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+  color: var(--sub); pointer-events: none;
+}
+.canvas-empty .icon { font-size: 48px; opacity: 0.3; }
+.canvas-empty p { font-size: 13px; }
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.section-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.12em; color: var(--sub);
+  margin-bottom: 8px;
+}
+
+/* File info */
+.file-info {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--sub);
+  line-height: 1.6;
+}
+
+.file-name {
+  font-size: 12px; color: var(--text);
+  font-weight: 500; margin-bottom: 4px;
+  word-break: break-all;
+}
+
+/* Crop list */
+.crop-list-wrap { flex: 1; overflow-y: auto; }
+
+.crop-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; transition: background 0.1s;
+}
+.crop-item:hover { background: var(--tag); }
+.crop-item.selected { background: #2a1f1d; border-left: 3px solid var(--accent); }
+
+.crop-thumb {
+  width: 48px; height: 36px;
+  object-fit: cover;
+  border-radius: 2px;
+  background: #333;
+  flex-shrink: 0;
+}
+
+.crop-info { flex: 1; min-width: 0; }
+.crop-id {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--accent);
+}
+.crop-size { font-size: 10px; color: var(--sub); }
+
+.crop-del {
+  background: none; border: none;
+  color: var(--sub); cursor: pointer;
+  font-size: 14px; padding: 2px 4px;
+  transition: color 0.15s;
+}
+.crop-del:hover { color: var(--accent); }
+
+/* Output settings */
+.out-field {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-bottom: 8px;
+}
+.out-field label { font-size: 10px; color: var(--sub); }
+.out-field input {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 5px 8px; border: 1px solid var(--border);
+  border-radius: 2px; background: var(--bg);
+  color: var(--text); outline: none;
+}
+.out-field input:focus { border-color: var(--accent); }
+
+/* Footer */
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Instructions */
+.instructions {
+  position: absolute; bottom: 12px; left: 12px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  pointer-events: none; line-height: 1.8;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>クロップツール</h1>
+    <span class="mono">Linguistic Landscape Sign Cropper</span>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="document.getElementById('file-input').click()">📂 写真を開く</button>
+    <button class="btn btn-green" id="save-all-btn" onclick="saveAll()" disabled>💾 全件保存</button>
+    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="loadImage(event)">
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Canvas -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div class="canvas-empty" id="canvas-empty">
+      <div class="icon">✂️</div>
+      <p>写真を開いてドラッグで範囲選択</p>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="instructions" id="instructions" style="display:none">
+      ドラッグ: 範囲選択  /  Deleteキー: 選択削除  /  Esc: 選択解除
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- File info -->
+    <div class="sidebar-section">
+      <div class="section-label">ファイル情報</div>
+      <div class="file-name" id="file-name">—</div>
+      <div class="file-info" id="file-info">写真を開いてください</div>
+    </div>
+
+    <!-- Output settings -->
+    <div class="sidebar-section">
+      <div class="section-label">出力設定</div>
+      <div class="out-field">
+        <label>ベースID（例: HAS-20260531-003）</label>
+        <input type="text" id="base-id" placeholder="HAS-20260531-003">
+      </div>
+      <div class="out-field">
+        <label>サフィックス形式</label>
+        <select id="suffix-type" style="font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:2px;background:var(--bg);color:var(--text);outline:none">
+          <option value="alpha">アルファベット (a, b, c...)</option>
+          <option value="num">数字 (1, 2, 3...)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Crop list -->
+    <div class="sidebar-section" style="padding-bottom:8px">
+      <div class="section-label" style="display:flex;justify-content:space-between">
+        <span>クロップ一覧</span>
+        <span id="crop-count" style="color:var(--accent);font-family:DM Mono,monospace">0件</span>
+      </div>
+    </div>
+    <div class="crop-list-wrap">
+      <div id="crop-list"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <button class="btn btn-accent" id="crop-btn" onclick="addCrop()" disabled>✂️ 選択範囲をクロップ</button>
+      <button class="btn btn-green" id="save-all-btn2" onclick="saveAll()" disabled>💾 写真を保存</button>
+      <button class="btn" id="csv-btn" onclick="exportCSV()" disabled
+        style="background:#2980b9;color:white;border-color:#2980b9">📄 CSV行を出力</button>
+      <div style="font-size:10px;color:var(--sub);text-align:center">
+        CSV出力→既存のdata.csvに追記してください
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── State ──
+let img = null;
+let imgFile = null;
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let wrap = document.getElementById('canvas-wrap');
+
+let scale = 1;
+let offsetX = 0, offsetY = 0;
+
+let isDragging = false;
+let startX, startY, curX, curY;
+let selection = null; // {x,y,w,h} in image coords
+
+let crops = []; // {id, x,y,w,h, dataUrl}
+let selectedCropIdx = null;
+
+function csvEscape(value) {
+  const v = String(value ?? '');
+  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+
+// ── Load Image ──
+function loadImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  imgFile = file;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const image = new Image();
+    image.onload = () => {
+      img = image;
+      crops = [];
+      selection = null;
+      selectedCropIdx = null;
+      renderCropList();
+      fitCanvas();
+      draw();
+
+      document.getElementById('canvas-empty').style.display = 'none';
+      document.getElementById('instructions').style.display = 'block';
+      document.getElementById('file-name').textContent = file.name;
+      document.getElementById('file-info').textContent = `${image.width} × ${image.height} px`;
+      document.getElementById('crop-btn').disabled = true;
+
+      // ベースIDを自動設定
+      const stem = file.name.replace(/\.[^.]+$/, '');
+      document.getElementById('base-id').value = stem;
+    };
+    image.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function fitCanvas() {
+  const ww = wrap.clientWidth;
+  const wh = wrap.clientHeight;
+  scale = Math.min(ww / img.width, wh / img.height, 1);
+  canvas.width  = Math.round(img.width  * scale);
+  canvas.height = Math.round(img.height * scale);
+  offsetX = (ww - canvas.width)  / 2;
+  offsetY = (wh - canvas.height) / 2;
+  canvas.style.left = offsetX + 'px';
+  canvas.style.top  = offsetY + 'px';
+}
+
+// ── Draw ──
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!img) return;
+
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  // 既存クロップを表示
+  crops.forEach((c, i) => {
+    const sx = c.x * scale, sy = c.y * scale;
+    const sw = c.w * scale, sh = c.h * scale;
+    ctx.strokeStyle = i === selectedCropIdx ? '#c84b31' : '#27ae60';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx, sy, sw, sh);
+    // ラベル
+    ctx.fillStyle = i === selectedCropIdx ? '#c84b31' : '#27ae60';
+    ctx.fillRect(sx, sy - 18, 40, 18);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 11px DM Mono, monospace';
+    ctx.fillText(c.id, sx + 4, sy - 4);
+  });
+
+  // 現在選択中の範囲
+  if (selection) {
+    const {x, y, w, h} = selection;
+    ctx.strokeStyle = '#f39c12';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 3]);
+    ctx.strokeRect(x * scale, y * scale, w * scale, h * scale);
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(243,156,18,0.1)';
+    ctx.fillRect(x * scale, y * scale, w * scale, h * scale);
+  }
+}
+
+// ── Mouse events ──
+canvas.addEventListener('mousedown', e => {
+  if (!img) return;
+  const rect = canvas.getBoundingClientRect();
+  startX = (e.clientX - rect.left) / scale;
+  startY = (e.clientY - rect.top)  / scale;
+  isDragging = true;
+  selection = null;
+  selectedCropIdx = null;
+  draw();
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!isDragging || !img) return;
+  const rect = canvas.getBoundingClientRect();
+  curX = (e.clientX - rect.left) / scale;
+  curY = (e.clientY - rect.top)  / scale;
+
+  const x = Math.max(0, Math.min(startX, curX));
+  const y = Math.max(0, Math.min(startY, curY));
+  const w = Math.abs(curX - startX);
+  const h = Math.abs(curY - startY);
+  selection = {x, y, w, h};
+  draw();
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  if (selection && selection.w > 10 && selection.h > 10) {
+    document.getElementById('crop-btn').disabled = false;
+  } else {
+    selection = null;
+    document.getElementById('crop-btn').disabled = true;
+    draw();
+  }
+});
+
+// キーボード
+document.addEventListener('keydown', e => {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (selectedCropIdx !== null) {
+      crops.splice(selectedCropIdx, 1);
+      selectedCropIdx = null;
+      renderCropList(); draw();
+    } else if (selection) {
+      selection = null;
+      document.getElementById('crop-btn').disabled = true;
+      draw();
+    }
+  }
+  if (e.key === 'Escape') {
+    selection = null;
+    selectedCropIdx = null;
+    document.getElementById('crop-btn').disabled = true;
+    draw();
+  }
+  // Enterでクロップ追加
+  if (e.key === 'Enter' && selection && selection.w > 10) {
+    addCrop();
+  }
+});
+
+// ── Add Crop ──
+function addCrop() {
+  if (!selection || selection.w < 10) return;
+
+  const suffixType = document.getElementById('suffix-type').value;
+  const idx = crops.length;
+  const suffix = suffixType === 'alpha'
+    ? String.fromCharCode(97 + idx)
+    : String(idx + 1);
+
+  const baseId = document.getElementById('base-id').value || 'crop';
+  const id = `${baseId}-${suffix}`;
+
+  // クロップ画像を生成
+  const tmp = document.createElement('canvas');
+  tmp.width  = Math.round(selection.w);
+  tmp.height = Math.round(selection.h);
+  const tc = tmp.getContext('2d');
+  tc.drawImage(img,
+    selection.x, selection.y, selection.w, selection.h,
+    0, 0, tmp.width, tmp.height
+  );
+  const dataUrl = tmp.toDataURL('image/jpeg', 0.92);
+
+  crops.push({ id, x: selection.x, y: selection.y, w: selection.w, h: selection.h, dataUrl });
+  selection = null;
+  document.getElementById('crop-btn').disabled = true;
+
+  renderCropList();
+  draw();
+}
+
+// ── Render crop list ──
+function renderCropList() {
+  const list = document.getElementById('crop-list');
+  document.getElementById('crop-count').textContent = crops.length + '件';
+
+  const saveBtn1 = document.getElementById('save-all-btn');
+  const saveBtn2 = document.getElementById('save-all-btn2');
+  const csvBtn   = document.getElementById('csv-btn');
+  saveBtn1.disabled = saveBtn2.disabled = csvBtn.disabled = crops.length === 0;
+
+  list.innerHTML = '';
+  crops.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'crop-item' + (i === selectedCropIdx ? ' selected' : '');
+    div.onclick = () => { selectedCropIdx = i; renderCropList(); draw(); };
+
+    div.innerHTML = `
+      <img class="crop-thumb" src="${c.dataUrl}" alt="${c.id}">
+      <div class="crop-info">
+        <div class="crop-id">${c.id}</div>
+        <div class="crop-size">${Math.round(c.w)} × ${Math.round(c.h)} px</div>
+      </div>
+      <button class="crop-del" onclick="event.stopPropagation();deleteCrop(${i})">×</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function deleteCrop(i) {
+  crops.splice(i, 1);
+  if (selectedCropIdx === i) selectedCropIdx = null;
+  else if (selectedCropIdx > i) selectedCropIdx--;
+  renderCropList(); draw();
+}
+
+// ── Save ──
+function saveAll() {
+  if (crops.length === 0) return;
+  crops.forEach(c => {
+    const a = document.createElement('a');
+    a.href = c.dataUrl;
+    a.download = c.id + '.jpg';
+    a.click();
+  });
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  if (!crops.length) return;
+  const baseId = document.getElementById('base-id').value || 'UNKNOWN';
+  const panoramaFile = imgFile ? imgFile.name : '';
+
+  // 元のファイル名からSignIDのベースを推定
+  // HAS-20260531-003.jpg → HAS, 003
+  const parts = baseId.split('-');
+  const area  = parts[0] || 'HAS';
+
+  const headers = [
+    'SignID','_status','写真ID','写真ファイル名','全景写真ファイル名',
+    '緯度','経度','採集日時','名称',
+    '主要言語','補助言語','装飾的言語','設置主体','担体類型',
+    '時間性','可読性','来源類型','視認等級','位置描述',
+    '多言語関係','想定受容者','制作品質','備考'
+  ];
+
+  const rows = crops.map(c => {
+    // SignIDを生成：HAS-S003-a形式
+    // baseId = HAS-20260531-003 の場合、連番部分を取得
+    const numPart = parts[parts.length - 1].padStart(3, '0');
+    const signId  = `${area}-S${numPart}-${c.id.split('-').pop()}`;
+    const photoId = baseId; // HAS-20260531-003
+
+    return [
+      signId,           // SignID
+      'pending',        // _status
+      photoId,          // 写真ID
+      c.id + '.jpg',    // 写真ファイル名（クロップ）
+      panoramaFile,     // 全景写真ファイル名
+      '', '',           // 緯度、経度（全景CSVから引き継ぎ）
+      '',               // 採集日時
+      '',               // 名称
+      '','','','','',   // 言語・設置主体・担体
+      '','','','','',   // 時間性・可読性・来源・視認・位置
+      '','','',''       // 多言語関係・受容者・品質・備考
+    ].map(csvEscape).join(',');
+  });
+
+  const csv = '\uFEFF' + headers.map(csvEscape).join(',') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = baseId + '_crop_rows.csv';
+  a.click();
+
+  // 使い方を表示
+  setTimeout(() => alert(
+    `${crops.length}件のCSV行を出力しました。
+
+` +
+    `次のステップ：
+` +
+    `1. 出力されたCSVを開く
+` +
+    `2. data.csvの末尾にこの行を追記する
+` +
+    `3. 全景写真の元行（${panoramaFile}）をdata.csvから削除する
+` +
+    `   （クロップが存在するため不要）`
+  ), 100);
+}
+
+// ── Resize ──
+window.addEventListener('resize', () => {
+  if (img) { fitCanvas(); draw(); }
+});
+</script>
+</body>
+</html>

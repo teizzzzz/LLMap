@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>言語景観 レビューツール v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap');
+
+:root {
+  --bg: #f5f2ed;
+  --panel: #ffffff;
+  --text: #1a1a1a;
+  --sub: #888;
+  --border: #e0dbd3;
+  --accent: #c84b31;
+  --green: #27ae60;
+  --yellow: #f39c12;
+  --blue: #2980b9;
+  --tag-bg: #f0ece5;
+  --input-bg: #fafaf8;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.header-left { display: flex; align-items: baseline; gap: 10px; }
+h1 { font-size: 14px; font-weight: 700; }
+.mono { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--sub); }
+
+.header-right { display: flex; align-items: center; gap: 6px; }
+
+.btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--panel);
+  color: var(--text);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--border); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-accent:hover { background: #a83928; }
+.btn-green { background: var(--green); color: white; border-color: var(--green); }
+.btn-green:hover { background: #219a52; }
+.btn-blue { background: var(--blue); color: white; border-color: var(--blue); }
+.btn-blue:hover { background: #1f618d; }
+
+.progress-bar { height: 2px; background: var(--border); flex-shrink: 0; }
+.progress-fill { height: 100%; background: var(--green); transition: width 0.3s; }
+
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* List */
+.list-panel {
+  width: 200px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.list-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--sub);
+  display: flex;
+  justify-content: space-between;
+}
+
+.list-scroll { overflow-y: auto; flex: 1; }
+
+.list-item {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.list-item:hover { background: var(--tag-bg); }
+.list-item.active { background: #fdf0ed; border-left: 3px solid var(--accent); }
+
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-pending  { background: #ddd; }
+.dot-ai       { background: var(--yellow); }
+.dot-modified { background: var(--blue); }
+.dot-reviewed { background: var(--green); }
+
+.item-text { flex: 1; min-width: 0; }
+.item-id   { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); }
+.item-name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Photo */
+.photo-panel {
+  width: 340px;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.photo-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.photo-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.photo-placeholder-dark {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 10px; color: #555;
+}
+.photo-placeholder-dark span { font-size: 40px; }
+.photo-placeholder-dark p { font-size: 11px; font-family: 'DM Mono', monospace; }
+
+/* AI overlay */
+.ai-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: white;
+  display: none;
+}
+.ai-overlay.active { display: flex; }
+.ai-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-overlay p { font-size: 12px; font-family: 'DM Mono', monospace; }
+
+.sign-tabs {
+  display: flex; background: #111;
+  padding: 0 12px; gap: 3px;
+  flex-shrink: 0; border-top: 1px solid #333;
+}
+.sign-tab {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 5px 8px; cursor: pointer; color: #666;
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+}
+.sign-tab:hover { color: #aaa; }
+.sign-tab.active { color: white; border-bottom-color: var(--accent); }
+.sign-tab.reviewed { color: var(--green); }
+.sign-tab.ai-done  { color: var(--yellow); }
+
+.add-sign-btn {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 5px 7px; cursor: pointer; color: #555;
+  background: none; border: none; transition: color 0.15s;
+}
+.add-sign-btn:hover { color: #aaa; }
+
+.photo-meta {
+  padding: 8px 12px; background: #111;
+  display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+}
+.photo-id-label { font-family: 'DM Mono', monospace; font-size: 11px; color: #888; }
+.photo-count    { font-family: 'DM Mono', monospace; font-size: 10px; color: #555; }
+
+/* Edit */
+.edit-panel { flex: 1; background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+.edit-scroll { flex: 1; overflow-y: auto; padding: 14px 16px; }
+
+.edit-section { margin-bottom: 16px; }
+.section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--sub); margin-bottom: 8px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field.full { grid-column: 1 / -1; }
+
+.field label { font-size: 10px; color: var(--sub); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+
+.ai-badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 2px;
+  background: #fff3cd; color: #856404; border: 1px solid #ffc107;
+}
+.ai-badge.confirmed { background: #d4edda; color: #155724; border-color: var(--green); }
+
+.field select,
+.field input,
+.field textarea {
+  font-family: 'Noto Sans JP', sans-serif; font-size: 11px;
+  padding: 5px 7px; border: 1px solid var(--border); border-radius: 2px;
+  background: var(--input-bg); color: var(--text); outline: none; transition: border-color 0.15s;
+}
+.field select:focus,
+.field input:focus,
+.field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 55px; line-height: 1.6; }
+
+.field-ai-highlight select,
+.field-ai-highlight input { border-color: var(--yellow); background: #fffdf0; }
+
+/* Edit footer */
+.edit-footer {
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; background: var(--panel);
+}
+
+.status-chips { display: flex; gap: 5px; align-items: center; }
+.status-chip {
+  padding: 3px 8px; border-radius: 2px; font-size: 10px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); transition: all 0.15s;
+}
+.chip-pending  { background: var(--tag-bg); color: var(--sub); }
+.chip-pending.active  { background: #ddd; color: #333; border-color: #aaa; }
+.chip-ai       { background: #fff8e1; color: #856404; border-color: var(--yellow); }
+.chip-ai.active { background: var(--yellow); color: white; }
+.chip-modified { background: #e8f0fb; color: var(--blue); border-color: var(--blue); }
+.chip-modified.active { background: var(--blue); color: white; }
+.chip-reviewed { background: #e8f8f0; color: var(--green); border-color: var(--green); }
+.chip-reviewed.active { background: var(--green); color: white; }
+
+.footer-right { display: flex; gap: 6px; }
+
+/* API Settings modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; display: none;
+}
+.modal-overlay.active { display: flex; }
+
+.modal {
+  background: var(--panel); border-radius: 4px;
+  width: 480px; max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 14px 18px; background: var(--text); color: white;
+  font-size: 13px; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.modal-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+.api-provider-tabs { display: flex; gap: 4px; }
+.api-tab {
+  flex: 1; padding: 8px; border: 1px solid var(--border);
+  border-radius: 2px; cursor: pointer; text-align: center;
+  font-size: 12px; transition: all 0.15s; background: var(--tag-bg);
+}
+.api-tab:hover { background: var(--border); }
+.api-tab.active { background: var(--text); color: white; border-color: var(--text); }
+
+.modal-field { display: flex; flex-direction: column; gap: 5px; }
+.modal-field label { font-size: 11px; color: var(--sub); font-weight: 500; }
+.modal-field input {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 2px;
+  background: var(--input-bg); outline: none;
+}
+.modal-field input:focus { border-color: var(--accent); }
+
+.modal-note {
+  font-size: 11px; color: var(--sub); line-height: 1.6;
+  background: var(--tag-bg); padding: 10px 12px; border-radius: 2px;
+}
+
+.modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Batch progress */
+.batch-bar {
+  background: var(--tag-bg); border-top: 1px solid var(--border);
+  padding: 8px 16px; display: none; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.batch-bar.active { display: flex; }
+.batch-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.batch-fill  { height: 100%; background: var(--yellow); transition: width 0.3s; border-radius: 2px; }
+.batch-text  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--sub); white-space: nowrap; }
+.batch-stop  { font-size: 10px; padding: 3px 8px; }
+
+/* Empty state */
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; color: var(--sub);
+}
+.empty-state .icon { font-size: 36px; opacity: 0.3; }
+.empty-state p { font-size: 12px; line-height: 1.7; text-align: center; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>言語景観 レビューツール</h1>
+    <span class="mono">v2 — AI判定対応</span>
+  </div>
+  <div class="header-right">
+    <span class="mono" id="progress-text">0 / 0 件</span>
+    <button class="btn" onclick="document.getElementById('csv-input').click()">📂 CSV</button>
+    <button class="btn" onclick="document.getElementById('photo-input').click()">🖼 写真</button>
+    <button class="btn btn-blue" id="ai-current-btn" onclick="runAIcurrent()" disabled>✨ AI判定（この1件）</button>
+    <button class="btn" style="background:#fff8e1;border-color:var(--yellow);color:#856404" id="ai-batch-btn" onclick="runAIbatch()" disabled>⚡ AI一括判定</button>
+    <button class="btn" onclick="openSettings()">⚙️ API設定</button>
+    <button class="btn btn-accent" onclick="exportCSV()">📥 CSV出力</button>
+    <input type="file" id="csv-input"   accept=".csv"    style="display:none" onchange="loadCSV(event)">
+    <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="loadPhotos(event)">
+  </div>
+</header>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+<div class="main">
+
+  <!-- List -->
+  <div class="list-panel">
+    <div class="list-header">
+      <span>SIGNS</span>
+      <span class="mono" id="list-count">0件</span>
+    </div>
+    <div class="list-scroll" id="sign-list">
+      <div style="padding:16px;text-align:center;color:var(--sub);font-size:11px;">CSVを読み込む</div>
+    </div>
+  </div>
+
+  <!-- Photo -->
+  <div class="photo-panel">
+    <div class="photo-container" id="photo-container">
+      <div class="photo-placeholder-dark">
+        <span>📷</span>
+        <p>写真を読み込む</p>
+      </div>
+      <div class="ai-overlay" id="ai-overlay">
+        <div class="ai-spinner"></div>
+        <p id="ai-overlay-text">AI判定中...</p>
+      </div>
+    </div>
+    <div class="sign-tabs" id="sign-tabs"></div>
+    <div class="photo-meta">
+      <span class="photo-id-label" id="photo-id-label">—</span>
+      <span class="photo-count"    id="photo-count-label"></span>
+    </div>
+  </div>
+
+  <!-- Edit -->
+  <div class="edit-panel" id="edit-panel">
+    <div class="empty-state">
+      <div class="icon">←</div>
+      <p>左のリストから<br>signを選択してください</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Batch progress bar -->
+<div class="batch-bar" id="batch-bar">
+  <span class="batch-text" id="batch-text">0 / 0</span>
+  <div class="batch-track"><div class="batch-fill" id="batch-fill" style="width:0%"></div></div>
+  <button class="btn batch-stop" onclick="stopBatch()">⏹ 停止</button>
+</div>
+
+<!-- API Settings Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span>⚙️ API設定</span>
+      <button style="background:none;border:none;color:white;cursor:pointer;font-size:16px" onclick="closeSettings()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="api-provider-tabs">
+        <div class="api-tab active" id="tab-claude" onclick="selectProvider('claude')">Claude (Anthropic)</div>
+        <div class="api-tab" id="tab-deepseek" onclick="selectProvider('deepseek')">DeepSeek</div>
+      </div>
+
+      <div class="modal-field" id="field-claude">
+        <label>Anthropic APIキー（sk-ant-...）</label>
+        <input type="password" id="claude-key" placeholder="sk-ant-api03-...">
+      </div>
+
+      <div class="modal-field" id="field-deepseek" style="display:none">
+        <label>DeepSeek APIキー</label>
+        <input type="password" id="deepseek-key" placeholder="sk-...">
+      </div>
+
+      <div class="modal-note" id="api-note">
+        🔒 APIキーはこのブラウザのメモリ上にのみ保存されます。ページを閉じると消えます。<br>
+        取得先: <strong>console.anthropic.com</strong> → API Keys → Create Key<br>
+        料金目安: 写真100枚の判定 ≈ $0.05〜$0.15（約8〜23円）
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeSettings()">キャンセル</button>
+      <button class="btn btn-accent" onclick="saveSettings()">保存して閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let signs = [];
+let photos = {};
+let currentIdx = null;
+let batchRunning = false;
+let batchStop = false;
+
+let apiConfig = {
+  provider: 'claude',
+  claudeKey: '',
+  deepseekKey: '',
+};
+
+const FIELDS = {
+  主要言語:   { type:'select', options:['日本語','中文','韓国語','英語','その他','—'] },
+  補助言語:   { type:'select', options:['日本語','中文','韓国語','英語','その他','—'] },
+  装飾的言語: { type:'select', options:['英語(ブランド名)','英語(装飾)','その他','—'] },
+  設置主体:   { type:'select', options:['行政/公共機関','商業','個人/非正式','不明'] },
+  担体類型:   { type:'select', options:['建物固定(看板)','建物固定(壁画)','建物固定(門牌)','移動物体(停車中)','貼付物(ポスター)','貼付物(ステッカー)','路面固定','デジタル表示(LED)','その他'] },
+  時間性:     { type:'select', options:['常設','臨時/季節的','不明'] },
+  可読性:     { type:'select', options:['完全可読','部分可読','不可読'] },
+  来源類型:   { type:'select', options:['top-down(標準化)','bottom-up(ローカル自作)','不明'] },
+  視認等級:   { type:'select', options:['歩行可読(<5m)','近距可読(5-15m)','遠距可読(>15m)'] },
+  多言語関係: { type:'select', options:['平行型','補完型','象徴型','単言語型'] },
+  想定受容者: { type:'select', options:['本地住民','特定コミュニティ','観光客・外国人','不明'] },
+  制作品質:   { type:'select', options:['専門印刷','半専門(印刷)','手書き'] },
+  位置描述:   { type:'text' },
+  備考:       { type:'textarea' },
+};
+
+const EXPORT_HEADERS = [
+  'ImageID','SignID','_status','写真ID','写真ファイル名','全景写真ファイル名',
+  '緯度','経度','採集日時','名称',
+  '主要言語','補助言語','装飾的言語','設置主体','担体類型',
+  '時間性','可読性','来源類型','視認等級','位置描述',
+  '多言語関係','想定受容者','制作品質',
+  '言説類型','状態','層状性','備考'
+];
+
+function csvEscape(value) {
+  const v = String(value ?? '');
+  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+
+// AI判定プロンプト
+const AI_PROMPT = `あなたは言語景観研究の専門家です。この写真に写っている看板・サイン・貼り紙などの文字を分析してください。
+
+以下のJSON形式のみで回答してください。前置き・説明・マークダウン不要です。
+
+{
+  "名称": "看板の内容を簡潔に（例: PayPay決済ステッカー）",
+  "主要言語": "日本語 or 中文 or 韓国語 or 英語 or その他",
+  "補助言語": "日本語 or 中文 or 韓国語 or 英語 or その他 or —",
+  "装飾的言語": "英語(ブランド名) or 英語(装飾) or その他 or —",
+  "設置主体": "行政/公共機関 or 商業 or 個人/非正式 or 不明",
+  "担体類型": "建物固定(看板) or 建物固定(壁画) or 移動物体(停車中) or 貼付物(ポスター) or 貼付物(ステッカー) or 路面固定 or デジタル表示(LED) or その他",
+  "時間性": "常設 or 臨時/季節的 or 不明",
+  "可読性": "完全可読 or 部分可読 or 不可読",
+  "来源類型": "top-down(標準化) or bottom-up(ローカル自作) or 不明",
+  "視認等級": "歩行可読(<5m) or 近距可読(5-15m) or 遠距可読(>15m)",
+  "多言語関係": "平行型 or 補完型 or 象徴型 or 単言語型",
+  "想定受容者": "本地住民 or 特定コミュニティ or 観光客・外国人 or 不明",
+  "制作品質": "専門印刷 or 半専門(印刷) or 手書き",
+  "備考": "気づいたことを簡潔に"
+}`;
+
+// ── API呼び出し ──
+async function callAI(imageUrl) {
+  const base64 = await urlToBase64(imageUrl);
+
+  if (apiConfig.provider === 'claude') {
+    if (!apiConfig.claudeKey) throw new Error('Claude APIキーが設定されていません');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiConfig.claudeKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+            { type: 'text', text: AI_PROMPT }
+          ]
+        }]
+      })
+    });
+    if (!res.ok) throw new Error(`Claude API エラー: ${res.status}`);
+    const data = await res.json();
+    return data.content[0].text;
+
+  } else {
+    if (!apiConfig.deepseekKey) throw new Error('DeepSeek APIキーが設定されていません');
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiConfig.deepseekKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
+            { type: 'text', text: AI_PROMPT }
+          ]
+        }]
+      })
+    });
+    if (!res.ok) throw new Error(`DeepSeek API エラー: ${res.status}`);
+    const data = await res.json();
+    return data.choices[0].message.content;
+  }
+}
+
+async function urlToBase64(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`画像取得失敗: ${url}`);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// AI判定用のURL取得（手動読み込み or photos/フォルダ）
+function getPhotoUrl(photoFile) {
+  return photos[photoFile] || (photoFile ? `photos/${photoFile}` : null);
+}
+
+function parseAIResult(text) {
+  try {
+    const clean = text.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  } catch {
+    return null;
+  }
+}
+
+function applyAIResult(idx, result) {
+  if (!result) return;
+  const aiFields = [];
+  Object.keys(FIELDS).forEach(key => {
+    if (result[key] !== undefined && result[key] !== '') {
+      signs[idx][key] = result[key];
+      aiFields.push(key);
+    }
+  });
+  if (result['名称']) signs[idx]['名称'] = result['名称'];
+  signs[idx]._status = 'ai';
+  signs[idx]._aiFields = aiFields;
+}
+
+// ── AI判定（1件）──
+async function runAIcurrent() {
+  if (currentIdx === null) return;
+  const sign = signs[currentIdx];
+  const photoFile = sign['写真ファイル名'];
+  const photoUrl = getPhotoUrl(photoFile);
+  if (!photoUrl) { alert('写真ファイル名が設定されていません'); return; }
+
+  const overlay = document.getElementById('ai-overlay');
+  overlay.classList.add('active');
+  document.getElementById('ai-overlay-text').textContent = `AI判定中... (${apiConfig.provider})`;
+  document.getElementById('ai-current-btn').disabled = true;
+
+  try {
+    const raw = await callAI(photoUrl);
+    const result = parseAIResult(raw);
+    if (!result) throw new Error('JSONパース失敗');
+    applyAIResult(currentIdx, result);
+    renderList();
+    renderEdit(currentIdx);
+    updateProgress();
+  } catch(e) {
+    alert('AI判定エラー: ' + e.message);
+  } finally {
+    overlay.classList.remove('active');
+    document.getElementById('ai-current-btn').disabled = false;
+  }
+}
+
+// ── AI一括判定 ──
+async function runAIbatch() {
+  if (batchRunning) return;
+  const pending = signs.map((s,i) => ({s,i})).filter(({s}) => s._status === 'pending');
+  if (pending.length === 0) { alert('未判定のsignがありません'); return; }
+  if (!confirm(`${pending.length} 件をAI判定します。続けますか？`)) return;
+
+  batchRunning = true;
+  batchStop = false;
+  document.getElementById('ai-batch-btn').disabled = true;
+  document.getElementById('batch-bar').classList.add('active');
+
+  let done = 0;
+  for (const {s, i} of pending) {
+    if (batchStop) break;
+    const photoFile = s['写真ファイル名'];
+    const photoUrl = getPhotoUrl(photoFile);
+    document.getElementById('batch-text').textContent = `${done + 1} / ${pending.length} — ${photoFile}`;
+    document.getElementById('batch-fill').style.width = ((done / pending.length) * 100) + '%';
+
+    if (photoUrl) {
+      try {
+        const raw = await callAI(photoUrl);
+        const result = parseAIResult(raw);
+        if (result) applyAIResult(i, result);
+      } catch(e) {
+        signs[i]._status = 'pending';
+        console.warn('判定失敗:', photoFile, e.message);
+      }
+    }
+    done++;
+    renderList();
+    updateProgress();
+    await new Promise(r => setTimeout(r, 300)); // rate limit対策
+  }
+
+  document.getElementById('batch-bar').classList.remove('active');
+  document.getElementById('ai-batch-btn').disabled = false;
+  batchRunning = false;
+  if (currentIdx !== null) renderEdit(currentIdx);
+  alert(`AI判定完了: ${done} 件処理しました`);
+}
+
+function stopBatch() {
+  batchStop = true;
+  document.getElementById('batch-bar').classList.remove('active');
+  document.getElementById('ai-batch-btn').disabled = false;
+  batchRunning = false;
+}
+
+// ── Settings ──
+function openSettings() {
+  document.getElementById('modal-overlay').classList.add('active');
+  document.getElementById('claude-key').value = apiConfig.claudeKey;
+  document.getElementById('deepseek-key').value = apiConfig.deepseekKey;
+  selectProvider(apiConfig.provider);
+}
+function closeSettings() { document.getElementById('modal-overlay').classList.remove('active'); }
+function saveSettings() {
+  apiConfig.claudeKey   = document.getElementById('claude-key').value.trim();
+  apiConfig.deepseekKey = document.getElementById('deepseek-key').value.trim();
+  const hasKey = apiConfig.provider === 'claude' ? apiConfig.claudeKey : apiConfig.deepseekKey;
+  if (hasKey) {
+    document.getElementById('ai-current-btn').disabled = signs.length === 0;
+    document.getElementById('ai-batch-btn').disabled   = signs.length === 0;
+  }
+  closeSettings();
+}
+function selectProvider(p) {
+  apiConfig.provider = p;
+  document.getElementById('tab-claude').classList.toggle('active', p === 'claude');
+  document.getElementById('tab-deepseek').classList.toggle('active', p === 'deepseek');
+  document.getElementById('field-claude').style.display   = p === 'claude'    ? '' : 'none';
+  document.getElementById('field-deepseek').style.display = p === 'deepseek'  ? '' : 'none';
+  const note = document.getElementById('api-note');
+  if (p === 'claude') {
+    note.innerHTML = '🔒 APIキーはメモリ上にのみ保存（ページを閉じると消えます）<br>取得先: <strong>console.anthropic.com</strong> → API Keys<br>料金目安: 100枚 ≈ $0.05〜$0.15（約8〜23円）';
+  } else {
+    note.innerHTML = '🔒 APIキーはメモリ上にのみ保存（ページを閉じると消えます）<br>取得先: <strong>platform.deepseek.com</strong> → API Keys<br>料金目安: 100枚 ≈ $0.01〜$0.05（約2〜8円）※画像認識精度はClaudeより低い場合あり';
+  }
+}
+
+// ── Load CSV ──
+function loadCSV(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split('\n').filter(l => l.trim());
+    const headers = parseCSVLine(lines[0]).map(h => h.trim());
+    signs = lines.slice(1).map(line => {
+      const vals = parseCSVLine(line);
+      const obj = {};
+      headers.forEach((h,i) => obj[h] = vals[i] || '');
+      if (!obj._status) obj._status = 'pending';
+      return obj;
+    });
+    renderList(); updateProgress();
+    const hasKey = apiConfig.provider === 'claude' ? apiConfig.claudeKey : apiConfig.deepseekKey;
+    if (hasKey) {
+      document.getElementById('ai-current-btn').disabled = false;
+      document.getElementById('ai-batch-btn').disabled   = false;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+function parseCSVLine(line) {
+  const r=[]; let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    if(line[i]==='"'){
+      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ=!inQ;
+    }
+    else if(line[i]===','&&!inQ){r.push(cur.trim());cur='';}
+    else cur+=line[i];
+  }
+  r.push(cur.trim()); return r;
+}
+
+// ── Load Photos ──
+function loadPhotos(e) {
+  Array.from(e.target.files).forEach(f => { photos[f.name] = URL.createObjectURL(f); });
+  if (currentIdx !== null) renderPhoto(currentIdx);
+  e.target.value = '';
+}
+
+// ── Render list ──
+function renderList() {
+  const list = document.getElementById('sign-list');
+  document.getElementById('list-count').textContent = signs.length + '件';
+
+  const groups = {};
+  signs.forEach((s,i) => {
+    const pid = s['写真ID'] || '?';
+    if (!groups[pid]) groups[pid] = [];
+    groups[pid].push({s,i});
+  });
+
+  list.innerHTML = '';
+  Object.entries(groups).forEach(([pid, items]) => {
+    const gh = document.createElement('div');
+    gh.style.cssText = 'padding:4px 10px;background:var(--tag-bg);font-size:10px;font-family:DM Mono,monospace;color:var(--sub);border-bottom:1px solid var(--border);';
+    gh.textContent = pid;
+    list.appendChild(gh);
+
+    items.forEach(({s,i}) => {
+      const div = document.createElement('div');
+      div.className = 'list-item' + (i===currentIdx?' active':'');
+      div.onclick = () => selectSign(i);
+      const dotClass = {pending:'dot-pending',ai:'dot-ai',modified:'dot-modified',reviewed:'dot-reviewed'}[s._status]||'dot-pending';
+      div.innerHTML = `
+        <div class="status-dot ${dotClass}"></div>
+        <div class="item-text">
+          <div class="item-id">${s['SignID']||'—'}</div>
+          <div class="item-name">${s['名称']||s['主要言語']||'未記入'}</div>
+        </div>`;
+      list.appendChild(div);
+    });
+  });
+}
+
+// ── Select sign ──
+function selectSign(idx) {
+  currentIdx = idx;
+  renderList(); renderPhoto(idx); renderEdit(idx);
+}
+
+// ── Render photo ──
+function renderPhoto(idx) {
+  const sign = signs[idx];
+  const photoFile = sign['写真ファイル名'] || '';
+  const pid = sign['写真ID'] || '';
+  document.getElementById('photo-id-label').textContent = pid;
+
+  const siblings = signs.map((s,i)=>({s,i})).filter(({s})=>s['写真ID']===pid);
+  const tabs = document.getElementById('sign-tabs');
+  tabs.innerHTML = '';
+  siblings.forEach(({s,i}) => {
+    const tab = document.createElement('div');
+    const suffix = (s['SignID']||'').split('-').pop();
+    tab.className = 'sign-tab'+(i===idx?' active':'')+(s._status==='reviewed'?' reviewed':s._status==='ai'?' ai-done':'');
+    tab.textContent = suffix; tab.title = s['SignID']||'';
+    tab.onclick = () => selectSign(i);
+    tabs.appendChild(tab);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-sign-btn'; addBtn.textContent = '+ sign';
+  addBtn.onclick = () => addSign(pid, photoFile, sign['緯度'], sign['経度'], sign['採集日時']);
+  tabs.appendChild(addBtn);
+
+  document.getElementById('photo-count-label').textContent = siblings.length + ' signs';
+
+  const container = document.getElementById('photo-container');
+  const overlay = document.getElementById('ai-overlay');
+
+  // 手動読み込み済み → そのURL / ローカルサーバー → photos/フォルダから自動取得
+  const manualUrl = photos[photoFile];
+  const autoUrl   = photoFile ? `photos/${photoFile}` : null;
+  const url        = manualUrl || autoUrl;
+
+  function setImg(src) {
+    const existing = container.querySelector('img');
+    if (existing) { existing.src = src; }
+    else {
+      container.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = src; img.alt = photoFile;
+      img.onerror = () => {
+        // 画像が見つからない場合はプレースホルダー表示
+        container.innerHTML = '';
+        const ph = document.createElement('div');
+        ph.className = 'photo-placeholder-dark';
+        ph.innerHTML = `<span>📷</span><p>${photoFile||'写真なし'}</p><p style="font-size:9px;margin-top:4px;color:#555">photos/${photoFile}</p>`;
+        container.appendChild(ph);
+        container.appendChild(overlay);
+      };
+      container.appendChild(img);
+      container.appendChild(overlay);
+    }
+  }
+
+  if (url) {
+    setImg(url);
+  } else {
+    container.innerHTML = '';
+    const ph = document.createElement('div');
+    ph.className = 'photo-placeholder-dark';
+    ph.innerHTML = `<span>📷</span><p>${photoFile||'写真なし'}</p>`;
+    container.appendChild(ph);
+    container.appendChild(overlay);
+  }
+}
+
+// ── Render edit ──
+function renderEdit(idx) {
+  const sign = signs[idx];
+  const panel = document.getElementById('edit-panel');
+  const status = sign._status || 'pending';
+  const aiFields = sign._aiFields || [];
+
+  const fieldsHTML = Object.entries(FIELDS).map(([key, cfg]) => {
+    const val = sign[key] || '';
+    const isAI = aiFields.includes(key);
+    const badge = isAI ? `<span class="ai-badge ${status==='reviewed'?'confirmed':''}">AI</span>` : '';
+    const hlClass = isAI && status !== 'reviewed' ? 'field-ai-highlight' : '';
+    const full = (key==='位置描述'||key==='備考') ? 'full' : '';
+
+    if (cfg.type === 'select') {
+      const opts = cfg.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
+      return `<div class="field ${full} ${hlClass}"><label>${key} ${badge}</label><select onchange="updateField(${idx},'${key}',this.value)">${opts}</select></div>`;
+    } else if (cfg.type === 'textarea') {
+      return `<div class="field full"><label>${key} ${badge}</label><textarea onchange="updateField(${idx},'${key}',this.value)">${val}</textarea></div>`;
+    } else {
+      return `<div class="field full"><label>${key} ${badge}</label><input type="text" value="${val}" onchange="updateField(${idx},'${key}',this.value)"></div>`;
+    }
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="edit-scroll">
+      <div class="edit-section">
+        <div class="section-title">識別情報</div>
+        <div class="field-grid">
+          <div class="field"><label>SignID</label><input type="text" value="${sign['SignID']||''}" onchange="updateField(${idx},'SignID',this.value)"></div>
+          <div class="field"><label>写真ID</label><input type="text" value="${sign['写真ID']||''}" readonly style="background:#f0f0f0;color:#888"></div>
+          <div class="field"><label>採集日時</label><input type="text" value="${sign['採集日時']||''}" onchange="updateField(${idx},'採集日時',this.value)"></div>
+          <div class="field"><label>名称 ${aiFields.includes('名称')?'<span class="ai-badge">AI</span>':''}</label><input type="text" value="${sign['名称']||''}" onchange="updateField(${idx},'名称',this.value)"></div>
+        </div>
+      </div>
+      <div class="edit-section">
+        <div class="section-title">
+          言語・属性フィールド
+          ${status==='ai' ? '<span style="font-size:9px;color:var(--yellow);font-weight:400">🟡 AI判定済み — 確認して承認してください</span>' : ''}
+        </div>
+        <div class="field-grid">${fieldsHTML}</div>
+      </div>
+    </div>
+    <div class="edit-footer">
+      <div class="status-chips">
+        <span class="status-chip chip-pending  ${status==='pending' ?'active':''}" onclick="setStatus(${idx},'pending')">⬜ 未判定</span>
+        <span class="status-chip chip-ai       ${status==='ai'      ?'active':''}" onclick="setStatus(${idx},'ai')">🟡 AI済み</span>
+        <span class="status-chip chip-modified ${status==='modified'?'active':''}" onclick="setStatus(${idx},'modified')">✏️ 修正済</span>
+        <span class="status-chip chip-reviewed ${status==='reviewed'?'active':''}" onclick="setStatus(${idx},'reviewed')">✅ 承認</span>
+      </div>
+      <div class="footer-right">
+        <button class="btn" onclick="navigateSign(-1)">← 前</button>
+        <button class="btn btn-green" onclick="approveAndNext()">✅ 承認して次へ</button>
+        <button class="btn" onclick="navigateSign(1)">次 →</button>
+      </div>
+    </div>`;
+}
+
+function updateField(idx, key, val) {
+  signs[idx][key] = val;
+  if (signs[idx]._status === 'ai') signs[idx]._status = 'modified';
+  else if (signs[idx]._status === 'pending') signs[idx]._status = 'modified';
+  renderList(); updateProgress();
+}
+
+function setStatus(idx, status) { signs[idx]._status = status; renderList(); renderEdit(idx); updateProgress(); }
+function approveAndNext() { setStatus(currentIdx,'reviewed'); navigateSign(1); }
+function navigateSign(dir) { const n=currentIdx+dir; if(n>=0&&n<signs.length) selectSign(n); }
+
+function addSign(pid, photoFile, lat, lng, dt) {
+  const siblings = signs.filter(s=>s['写真ID']===pid);
+  const suffix = suffixForIndex(siblings.length);
+  const base = signBaseFromPhotoId(pid);
+  const newSign = { SignID:`${base}-${suffix}`, '写真ID':pid, '写真ファイル名':photoFile, '全景写真ファイル名':'', '緯度':lat||'', '経度':lng||'', '採集日時':dt||'', '名称':'', _status:'pending' };
+  const lastIdx = signs.map((s,i)=>({s,i})).filter(({s})=>s['写真ID']===pid).pop().i;
+  signs.splice(lastIdx+1,0,newSign);
+  renderList(); selectSign(lastIdx+1); updateProgress();
+}
+
+function signBaseFromPhotoId(pid) {
+  const parts = String(pid || '').split('-');
+  const area = parts[0] || 'UNK';
+  const num = (parts[parts.length - 1] || '000').padStart(3, '0');
+  return `${area}-S${num}`;
+}
+
+function suffixForIndex(idx) {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+  return idx < alphabet.length ? alphabet[idx] : String(idx + 1);
+}
+
+function updateProgress() {
+  const total = signs.length;
+  const reviewed = signs.filter(s=>s._status==='reviewed').length;
+  document.getElementById('progress-text').textContent = reviewed+' / '+total+' 件承認';
+  document.getElementById('progress-fill').style.width = total>0?(reviewed/total*100)+'%':'0%';
+}
+
+function exportCSV() {
+  if (!signs.length) { alert('データがありません'); return; }
+  const existingHeaders = Array.from(new Set(signs.flatMap(s => Object.keys(s))))
+    .filter(h => !h.startsWith('_ai') && !EXPORT_HEADERS.includes(h));
+  const headers = [...EXPORT_HEADERS, ...existingHeaders];
+  const rows = signs.map(s=>headers.map(h=>csvEscape(s[h]||'')).join(','));
+  const csv = [headers.map(csvEscape).join(','),...rows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'LL_reviewed_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
