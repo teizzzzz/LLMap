@@ -630,13 +630,15 @@ function exportCSV() {
 ` +
     `次のステップ：
 ` +
-    `1. 出力されたCSVを開く
+    `1. 保存したcrop画像を photos フォルダに入れる
 ` +
-    `2. data.csvの末尾にこの行を追記する
+    `2. ランチャー → Crop後CSV再生成 を実行する
 ` +
-    `3. 全景写真の元行（${panoramaFile}）をdata.csvから削除する
+    `   （または CSVマージ でこのcrop CSVを選択）
 ` +
-    `   （クロップが存在するため不要）`
+    `3. data.csv が更新されたら地図・AI判定で確認する
+` +
+    `対象全景: ${panoramaFile}`
   ), 100);
 }
 

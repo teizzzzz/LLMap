@@ -33,6 +33,9 @@ import anthropic
 from PIL import Image, ImageOps
 import pandas as pd
 
+class AuthenticationFailed(Exception):
+    """Raised when the selected AI provider rejects the API key."""
+
 # ────────────────────────────────
 # プロンプト
 # ────────────────────────────────
@@ -167,6 +170,19 @@ def parse_result(text):
         return json.loads(clean.strip())
     except:
         return None
+
+def is_auth_error(exc):
+    text = str(exc).lower()
+    markers = [
+        '401',
+        'unauthorized',
+        'authentication_error',
+        'invalid x-api-key',
+        'invalid api key',
+        'api_key_invalid',
+        'permission_denied',
+    ]
+    return any(marker in text for marker in markers)
 
 # ────────────────────────────────
 # GUI
@@ -555,6 +571,8 @@ class App(tk.Tk):
                 out_path = csv_p.parent / out_name
             self.out_path = out_path
             success = failed = 0
+            dirty = False
+            backup_path = None
 
             self.progress['maximum'] = total
 
@@ -589,33 +607,64 @@ class App(tk.Tk):
                         src  = result.get('来源類型','?')
                         self._log(f"   {sign_id}  {lang} / {src}", '#27ae60')
                         success += 1
+                        dirty = True
                     else:
                         self._log(f"   {sign_id}: パース失敗", '#c84b31')
                         failed += 1
 
                 except Exception as e:
+                    if is_auth_error(e):
+                        failed += 1
+                        raise AuthenticationFailed(
+                            "APIキーが無効です。Claude/Gemini のキーを確認してから再実行してください。"
+                        ) from e
                     self._log(f"   {sign_id}: {e}", '#c84b31')
                     failed += 1
 
                 # 10件ごと中間保存
-                if (i + 1) % 10 == 0:
+                if dirty and (i + 1) % 10 == 0:
+                    if self.overwrite.get() and backup_path is None and out_path.exists():
+                        stamp = time.strftime('%Y%m%d-%H%M%S')
+                        backup_path = out_path.with_name(f"{out_path.stem}_backup_before_ai_{stamp}{out_path.suffix}")
+                        import shutil
+                        shutil.copy2(out_path, backup_path)
+                        self._log(f"   バックアップ: {backup_path.name}", '#888888')
                     df.to_csv(out_path, index=False, encoding='utf-8-sig')
                     self._log(f"   中間保存 ({i+1}件)", '#888888')
 
                 time.sleep(delay)
 
             # 最終保存
-            df.to_csv(out_path, index=False, encoding='utf-8-sig')
+            if dirty:
+                if self.overwrite.get() and backup_path is None and out_path.exists():
+                    stamp = time.strftime('%Y%m%d-%H%M%S')
+                    backup_path = out_path.with_name(f"{out_path.stem}_backup_before_ai_{stamp}{out_path.suffix}")
+                    import shutil
+                    shutil.copy2(out_path, backup_path)
+                    self._log(f"   バックアップ: {backup_path.name}", '#888888')
+                df.to_csv(out_path, index=False, encoding='utf-8-sig')
+            else:
+                self._log("   変更がないためCSVは保存しませんでした", '#f39c12')
             self.progress['value'] = total
             self.prog_label.config(text=f"完了: {success} 件成功 / {failed} 件失敗")
 
             self._log("")
             self._log(f"------------------------------", '#888888')
             self._log(f" 完了！  成功: {success}件  失敗: {failed}件", '#27ae60')
-            self._log(f"[出力] {out_path}", '#2980b9')
+            if dirty:
+                self._log(f"[出力] {out_path}", '#2980b9')
             self._log(f"------------------------------", '#888888')
-            self.open_btn.config(state='normal')
+            if dirty:
+                self.open_btn.config(state='normal')
 
+        except AuthenticationFailed as e:
+            self.stop_flag = True
+            self.progress['value'] = 0
+            self.prog_label.config(text="停止: APIキーエラー")
+            self._log("")
+            self._log(f"[停止] {e}", '#c84b31')
+            self._log("CSVは保存していません。APIキーを修正してから再実行してください。", '#f39c12')
+            messagebox.showerror("APIキーエラー", str(e))
         except Exception as e:
             self._log(f"\n エラー: {e}", '#c84b31')
 

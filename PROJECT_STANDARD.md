@@ -25,6 +25,7 @@
 | `ll_rename_gui.py` | 照片重命名与初始 CSV 生成 | 读取 EXIF 时间/GPS，输出 `photos/`、`thumbs/`、`data.csv` |
 | `crop_tool.html` | 单张照片 sign 裁剪工具 | 从全景图裁出多个 sign 图片，并导出 crop CSV 行 |
 | `csv_merge.py` | CSV 合并工具 | 删除已有裁剪图的全景行，追加 crop CSV，重排 `ImageID` |
+| `crop_rebuild_gui.py` | 裁剪后 CSV 重建工具 | 扫描 `photos/` 中的全景/裁剪图命名，重新生成 `data.csv` |
 | `ll_ai_judge_gui.py` | Python AI 批量判定工具 | 读取 CSV 与照片，调用 Claude/Gemini 写入 AI 字段 |
 | `review_tool_v2.html` | 人工复核工具 | 读取 CSV 和照片，编辑字段，管理 `_status`，导出复核 CSV |
 | `index.html` | 地图展示页 | 读取 `data.csv`，用 Leaflet 展示点位与详情 |
@@ -40,7 +41,7 @@
 1. 现场采集照片。
 2. 使用 `ll_rename_gui.py` 批量重命名，生成标准照片名和初始 `data.csv`。
 3. 如一张照片包含多个 sign，使用 `crop_tool.html` 裁剪，导出裁剪图片与 crop CSV。
-4. 使用 `csv_merge.py` 将 crop CSV 合并回主 CSV，并删除已有裁剪图的全景行。
+4. 裁剪数量较少时，可使用 `csv_merge.py` 将 crop CSV 合并回主 CSV；裁剪数量较多时，优先使用 `crop_rebuild_gui.py` 按 `photos/` 文件命名重建 `data.csv`。
 5. 使用 `ll_ai_judge_gui.py` 或 `review_tool_v2.html` 做 AI 预标注。
 6. 使用 `review_tool_v2.html` 人工确认、修正、承认。
 7. 将最终确认后的 CSV 保存为主 `data.csv` 或明确版本名。
@@ -60,6 +61,7 @@ mapv2.0/
   launcher.py
   ランチャー.py
   ll_rename_gui.py
+  crop_rebuild_gui.py
   ll_ai_judge_gui.py
   accuracy_test_gui.py
   csv_merge.py
@@ -421,7 +423,7 @@ AI 判定阶段：
 Python 语法检查：
 
 ```powershell
-python -m py_compile ランチャー.py ll_rename_gui.py csv_merge.py ll_ai_judge_gui.py accuracy_test_gui.py
+python -m py_compile ランチャー.py ll_rename_gui.py csv_merge.py crop_rebuild_gui.py ll_ai_judge_gui.py accuracy_test_gui.py
 ```
 
 本地服务器：

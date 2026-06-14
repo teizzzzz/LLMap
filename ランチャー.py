@@ -46,7 +46,7 @@ class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("言語景観ツール ランチャー")
-        self.geometry("520x680")
+        self.geometry("520x735")
         self.resizable(False, False)
         self.configure(bg='#f5f2ed')
 
@@ -141,6 +141,11 @@ class Launcher(tk.Tk):
                      "csv_merge.py",
                      "全景行削除・クロップ行追記を自動化",
                      '#27ae60')
+
+        self._py_btn(py_frame, "Crop後CSV再生成",
+                     "crop_rebuild_gui.py",
+                     "photos内の命名からdata.csvを再構築",
+                     '#2c7a7b')
 
         self._py_btn(py_frame, "AI判定",
                      "ll_ai_judge_gui.py",

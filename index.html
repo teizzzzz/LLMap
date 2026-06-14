@@ -4,163 +4,660 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>言語景観マップ</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #f5f2ed;
+    --bg: #f6f4ef;
     --panel: #ffffff;
-    --text: #1a1a1a;
-    --text-sub: #666;
+    --panel-soft: #fbfaf7;
+    --ink: #1e2328;
+    --muted: #6d7278;
+    --line: #ded8ce;
+    --line-strong: #c9c1b5;
     --accent: #c84b31;
-    --border: #e0dbd3;
-    --tag-bg: #f0ece5;
-    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+    --blue: #2f76b7;
+    --green: #23835a;
+    --amber: #b7781f;
+    --violet: #7552a8;
+    --teal: #247b83;
+    --shadow: 0 10px 28px rgba(30,35,40,0.12);
+    --header-h: 58px;
+    --radius: 8px;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { box-sizing: border-box; }
 
+  html,
   body {
-    font-family: 'Noto Sans JP', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+    margin: 0;
+    height: 100%;
     overflow: hidden;
   }
 
-  /* ── Header ── */
-  header {
+  body {
+    font-family: 'Noto Sans JP', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    letter-spacing: 0;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  .app {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: var(--header-h) 1fr;
+  }
+
+  .topbar {
     background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 52px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) auto minmax(190px, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 0 18px;
+    z-index: 20;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .brand-subtitle {
+    margin-top: 3px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .view-tabs {
+    display: inline-grid;
+    grid-auto-flow: column;
+    gap: 4px;
+    padding: 4px;
+    background: #ece6dc;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .view-tab {
+    border: 0;
+    background: transparent;
+    color: #3f454b;
+    min-width: 76px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .view-tab.active {
+    background: var(--panel);
+    color: var(--accent);
+    box-shadow: 0 1px 4px rgba(30,35,40,0.12);
+  }
+
+  .top-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .file-btn,
+  .icon-btn,
+  .select {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 6px;
+    height: 34px;
+  }
+
+  .file-btn {
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .file-btn:hover,
+  .icon-btn:hover,
+  .select:hover {
+    border-color: var(--line-strong);
+    background: var(--panel-soft);
+  }
+
+  .icon-btn {
+    width: 36px;
+    display: grid;
+    place-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+  }
+
+  .count-pill {
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    min-width: 74px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: #20252a;
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .workspace {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .left-pane {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    border-right: 1px solid var(--line);
+  }
+
+  .toolbar {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+  }
+
+  .toolbar-label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .chip-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .select {
+    min-width: 148px;
+    padding: 0 30px 0 10px;
+    font-size: 12px;
+  }
+
+  .view-stage {
+    min-height: 0;
+    position: relative;
+    background: #eee9df;
+  }
+
+  .view {
+    position: absolute;
+    inset: 0;
+    display: none;
+    min-height: 0;
+  }
+
+  .view.active {
+    display: block;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .canvas-view {
+    height: 100%;
+    overflow: auto;
+    padding: 18px;
+  }
+
+  .viz-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .viz-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 0 rgba(30,35,40,0.03);
+    min-width: 0;
+  }
+
+  .viz-panel.full { grid-column: span 12; }
+  .viz-panel.half { grid-column: span 6; }
+  .viz-panel.third { grid-column: span 4; }
+  .viz-panel.two-thirds { grid-column: span 8; }
+
+  .panel-head {
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-shrink: 0;
-    z-index: 1000;
-  }
-
-  .header-left {
-    display: flex;
-    align-items: baseline;
     gap: 12px;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--line);
   }
 
-  .header-right {
+  .panel-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .panel-note {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .panel-body {
+    padding: 14px;
+  }
+
+  .metric-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .metric {
+    min-height: 76px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel-soft);
+  }
+
+  .metric-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .metric-label {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .bar-list {
+    display: grid;
+    gap: 9px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: minmax(88px, 160px) 1fr 44px;
+    align-items: center;
+    gap: 10px;
+    min-height: 24px;
+  }
+
+  .bar-label {
+    font-size: 12px;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bar-track {
+    height: 10px;
+    border-radius: 999px;
+    background: #ebe5dc;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    min-width: 2px;
+    border-radius: 999px;
+    background: var(--blue);
+  }
+
+  .bar-value {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .donut-wrap {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+
+  .donut {
+    width: 170px;
+    height: 170px;
+  }
+
+  .legend {
+    display: grid;
+    gap: 8px;
+  }
+
+  .legend-row {
+    display: grid;
+    grid-template-columns: 12px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .timeline {
+    min-height: 230px;
+    display: grid;
+    align-items: end;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(26px, 1fr);
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .time-col {
+    min-height: 180px;
     display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     align-items: center;
     gap: 8px;
   }
 
-  h1 {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--text);
+  .time-bar {
+    width: 100%;
+    min-height: 3px;
+    border-radius: 5px 5px 0 0;
+    background: var(--teal);
   }
 
-  .subtitle {
+  .time-label {
+    color: var(--muted);
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--text-sub);
-    font-weight: 300;
+    font-size: 10px;
+    writing-mode: vertical-rl;
   }
 
-  .count-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    background: var(--accent);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 2px;
+  .network-wrap {
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto 1fr;
   }
 
-  .header-btn {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 11px;
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-    border-radius: 2px;
+  .network-summary {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+  }
+
+  .network-badge {
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 6px;
     background: var(--panel);
-    color: var(--text);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .network-stage {
+    min-height: 0;
+    position: relative;
+    background:
+      linear-gradient(rgba(30,35,40,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,35,40,0.05) 1px, transparent 1px),
+      #f2eee7;
+    background-size: 34px 34px;
+  }
+
+  #network-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .net-link {
+    stroke: rgba(70,75,80,0.22);
+    stroke-width: 1;
+  }
+
+  .net-node {
+    cursor: pointer;
+    filter: drop-shadow(0 3px 7px rgba(30,35,40,0.16));
+  }
+
+  .net-label {
+    pointer-events: none;
+    fill: #252a30;
+    font-size: 11px;
+    font-weight: 700;
+    paint-order: stroke;
+    stroke: rgba(246,244,239,0.85);
+    stroke-width: 3px;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .photo-card {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-width: 0;
     cursor: pointer;
   }
 
-  .header-btn:hover { background: var(--tag-bg); }
+  .photo-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: 0 8px 18px rgba(30,35,40,0.10);
+  }
 
-  /* ── Layout ── */
-  .main {
-    display: flex;
-    flex: 1;
+  .photo-thumb {
+    aspect-ratio: 4 / 3;
+    background: #e7e1d7;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
     overflow: hidden;
   }
 
-  /* ── Map ── */
-  #map {
-    flex: 1;
-    z-index: 1;
+  .photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
-  /* ── Sidebar ── */
-  .sidebar {
-    width: 340px;
+  .photo-meta {
+    padding: 10px;
+  }
+
+  .photo-id {
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .photo-title {
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    min-height: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .photo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .side-panel {
+    min-width: 0;
+    min-height: 0;
     background: var(--panel);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    flex-shrink: 0;
+    display: grid;
+    grid-template-rows: auto 1fr;
   }
 
-  .sidebar-empty {
-    flex: 1;
+  .side-head {
+    min-height: 54px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--text-sub);
-    padding: 40px;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .side-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .side-scroll {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .empty-state {
+    min-height: 100%;
+    display: grid;
+    align-content: center;
+    gap: 10px;
+    padding: 28px;
     text-align: center;
+    color: var(--muted);
   }
 
-  .sidebar-empty .icon {
-    font-size: 40px;
-    opacity: 0.3;
+  .empty-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    background: var(--panel-soft);
   }
 
-  .sidebar-empty p {
+  .empty-state p {
+    margin: 0;
     font-size: 13px;
     line-height: 1.7;
-    font-weight: 300;
   }
 
-  /* ── Detail Panel ── */
   .detail {
-    flex: 1;
-    overflow-y: auto;
     display: none;
   }
 
-  .detail.active { display: block; }
+  .detail.active {
+    display: block;
+  }
 
   .detail-photo {
-    width: 100%;
-    aspect-ratio: 4/3;
-    object-fit: cover;
-    background: var(--tag-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-sub);
-    font-size: 12px;
+    aspect-ratio: 4 / 3;
+    background: #e7e1d7;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
     font-family: 'DM Mono', monospace;
+    overflow: hidden;
   }
 
   .detail-photo img {
@@ -169,472 +666,1081 @@
     object-fit: cover;
   }
 
-  .photo-placeholder {
-    width: 100%;
-    aspect-ratio: 4/3;
-    background: var(--tag-bg);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: var(--text-sub);
+  .detail-body {
+    padding: 16px;
   }
 
-  .photo-placeholder span { font-size: 28px; opacity: 0.4; }
-  .photo-placeholder p { font-size: 11px; font-family: 'DM Mono', monospace; }
-
-  .detail-body { padding: 20px; }
-
   .detail-id {
+    color: var(--accent);
     font-family: 'DM Mono', monospace;
     font-size: 11px;
-    color: var(--accent);
     font-weight: 500;
-    letter-spacing: 0.1em;
-    margin-bottom: 6px;
   }
 
   .detail-title {
-    font-size: 16px;
+    margin-top: 5px;
+    font-size: 18px;
     font-weight: 700;
-    margin-bottom: 4px;
-    line-height: 1.4;
+    line-height: 1.35;
   }
 
-  .detail-location {
+  .detail-sub {
+    margin-top: 7px;
+    color: var(--muted);
     font-size: 12px;
-    color: var(--text-sub);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    line-height: 1.5;
   }
 
-  .detail-section {
-    margin-bottom: 16px;
+  .section {
+    margin-top: 18px;
   }
 
-  .detail-section-title {
+  .section-title {
+    color: var(--muted);
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-sub);
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
   }
 
-  .tag-group {
+  .tag-row {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 8px;
+    margin-top: 10px;
   }
 
   .tag {
-    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
     padding: 3px 8px;
-    border-radius: 2px;
-    font-weight: 500;
-    background: var(--tag-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel-soft);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 700;
   }
 
-  .tag.lang-ja { background: #e8f4fd; border-color: #b3d9f5; color: #1a5276; }
-  .tag.lang-zh { background: #fef9e7; border-color: #f9e79f; color: #784212; }
-  .tag.lang-ko { background: #eafaf1; border-color: #a9dfbf; color: #145a32; }
-  .tag.lang-en { background: #f4ecf7; border-color: #d7bde2; color: #4a235a; }
-  .tag.top-down { background: #fdf2e9; border-color: #f0b27a; color: #784212; }
-  .tag.bottom-up { background: #e9f7ef; border-color: #82e0aa; color: #1e8449; }
+  .tag.ja { background: #e8f2fb; border-color: #bdd5ec; color: #1f5b91; }
+  .tag.zh { background: #fff2d9; border-color: #e2bd78; color: #855612; }
+  .tag.ko { background: #e5f5ee; border-color: #9ad1b8; color: #1a6848; }
+  .tag.en { background: #eee8f7; border-color: #c9b9e3; color: #5c4188; }
+  .tag.other { background: #eceff0; border-color: #cfd7d9; color: #4d575b; }
+  .tag.source-top { background: #fae9df; border-color: #e7b59e; color: #95442d; }
+  .tag.source-bottom { background: #e7f4e8; border-color: #9ccd9f; color: #236d39; }
 
-  .field-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    font-size: 12px;
-    padding: 5px 0;
-    border-bottom: 1px solid var(--border);
+  .field-list {
+    margin-top: 8px;
+  }
+
+  .field {
+    display: grid;
+    grid-template-columns: 112px 1fr;
     gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
   }
 
-  .field-row:last-child { border-bottom: none; }
+  .field:last-child {
+    border-bottom: 0;
+  }
 
   .field-label {
-    color: var(--text-sub);
-    font-weight: 400;
-    flex-shrink: 0;
-    font-size: 11px;
+    color: var(--muted);
   }
 
   .field-value {
-    color: var(--text);
-    font-weight: 500;
     text-align: right;
-    font-size: 11px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
   }
 
-  .memo-box {
-    background: var(--tag-bg);
-    border-radius: 4px;
+  .memo {
+    margin-top: 10px;
     padding: 10px 12px;
+    border-left: 3px solid var(--accent);
+    background: var(--panel-soft);
+    border-radius: 6px;
     font-size: 12px;
     line-height: 1.7;
-    color: var(--text);
-    border-left: 3px solid var(--accent);
   }
 
-  /* ── Filter bar ── */
-  .filter-bar {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    flex-shrink: 0;
-  }
-
-  .filter-bar label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--text-sub);
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  .filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-
-  .chip {
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 2px;
-    border: 1px solid var(--border);
-    background: var(--tag-bg);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Noto Sans JP', sans-serif;
-    color: var(--text);
-  }
-
-  .chip:hover { background: var(--border); }
-  .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-  /* ── Custom marker ── */
   .marker-dot {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     border: 2px solid white;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    cursor: pointer;
-    transition: transform 0.15s;
+    box-shadow: 0 2px 7px rgba(30,35,40,0.32);
   }
 
-  /* Scrollbar */
-  .detail::-webkit-scrollbar { width: 4px; }
-  .detail::-webkit-scrollbar-track { background: transparent; }
-  .detail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .marker-dot.active {
+    transform: scale(1.55);
+    border-color: #20252a;
+  }
 
-  /* Leaflet overrides */
   .leaflet-popup-content-wrapper {
-    border-radius: 4px;
+    border-radius: 6px;
     box-shadow: var(--shadow);
     font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .mobile-detail-toggle {
+    display: none;
+  }
+
+  @media (max-width: 980px) {
+    .topbar {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      height: auto;
+      min-height: var(--header-h);
+      padding: 8px 10px;
+    }
+
+    .brand {
+      grid-column: 1 / 2;
+    }
+
+    .top-actions {
+      grid-column: 2 / 3;
+    }
+
+    .view-tabs {
+      grid-column: 1 / -1;
+      width: 100%;
+      overflow-x: auto;
+      grid-auto-columns: minmax(74px, 1fr);
+    }
+
+    .app {
+      grid-template-rows: auto 1fr;
+    }
+
+    .workspace {
+      grid-template-columns: 1fr;
+      position: relative;
+    }
+
+    .left-pane {
+      border-right: 0;
+    }
+
+    .toolbar {
+      padding: 8px 10px;
+      min-height: 48px;
+    }
+
+    .side-panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: min(78vh, 520px);
+      z-index: 50;
+      transform: translateY(calc(100% - 48px));
+      transition: transform 0.22s ease;
+      border-top: 1px solid var(--line);
+      box-shadow: 0 -12px 30px rgba(30,35,40,0.16);
+    }
+
+    .side-panel.open {
+      transform: translateY(0);
+    }
+
+    .mobile-detail-toggle {
+      display: inline-grid;
+    }
+
+    .side-head {
+      min-height: 48px;
+    }
+
+    .canvas-view {
+      padding: 10px;
+      padding-bottom: 62px;
+    }
+
+    .viz-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .viz-panel,
+    .viz-panel.full,
+    .viz-panel.half,
+    .viz-panel.third,
+    .viz-panel.two-thirds {
+      grid-column: auto;
+    }
+
+    .metric-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .donut-wrap {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+
+    .bar-row {
+      grid-template-columns: minmax(74px, 112px) 1fr 38px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .brand-title {
+      font-size: 14px;
+    }
+
+    .brand-subtitle {
+      display: none;
+    }
+
+    .file-btn {
+      width: 34px;
+      padding: 0;
+      overflow: hidden;
+      color: transparent;
+      position: relative;
+    }
+
+    .file-btn::after {
+      content: "CSV";
+      color: var(--ink);
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+    }
+
+    .count-pill {
+      min-width: 58px;
+      font-size: 11px;
+    }
+
+    .view-tab {
+      min-width: 68px;
+      padding: 0 8px;
+      font-size: 11px;
+    }
+
+    .select {
+      min-width: 132px;
+    }
+
+    .metric-row {
+      grid-template-columns: 1fr;
+    }
+
+    .gallery-grid {
+      grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    }
+
+    .field {
+      grid-template-columns: 94px 1fr;
+      gap: 8px;
+    }
   }
 </style>
 </head>
 <body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1 class="brand-title">言語景観マップ</h1>
+      <div class="brand-subtitle">Linguistic Landscape Field Records</div>
+    </div>
 
-<header>
-  <div class="header-left">
-    <h1>言語景観マップ</h1>
-    <span class="subtitle">Linguistic Landscape Field Records</span>
-  </div>
-  <div class="header-right">
-    <button class="header-btn" onclick="document.getElementById('csv-file-input').click()">CSVを開く</button>
-    <span class="count-badge" id="count-badge">0 件</span>
-    <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="loadCSVFile(event)">
-  </div>
-</header>
+    <nav class="view-tabs" aria-label="表示切替">
+      <button class="view-tab active" data-view="map">Map</button>
+      <button class="view-tab" data-view="network">Network</button>
+      <button class="view-tab" data-view="stats">Stats</button>
+      <button class="view-tab" data-view="gallery">Gallery</button>
+    </nav>
 
-<div class="main">
-  <div id="map"></div>
+    <div class="top-actions">
+      <button class="file-btn" onclick="document.getElementById('csv-file-input').click()">CSVを開く</button>
+      <button class="icon-btn mobile-detail-toggle" id="mobile-detail-toggle" title="詳細">i</button>
+      <span class="count-pill" id="count-badge">0</span>
+      <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="loadCSVFile(event)">
+    </div>
+  </header>
 
-  <div class="sidebar">
-    <div class="filter-bar">
-      <label>主要言語でフィルター</label>
-      <div class="filter-chips" id="filter-chips">
-        <button class="chip active" data-filter="all">すべて</button>
+  <main class="workspace">
+    <section class="left-pane">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <span class="toolbar-label">Language</span>
+          <div class="chip-row" id="language-filters">
+            <button class="chip active" data-filter="all">すべて</button>
+          </div>
+        </div>
+        <div class="toolbar-group">
+          <span class="toolbar-label">Source</span>
+          <select class="select" id="source-filter" aria-label="来源フィルター">
+            <option value="all">すべて</option>
+          </select>
+        </div>
+        <div class="toolbar-group">
+          <span class="toolbar-label">Status</span>
+          <select class="select" id="status-filter" aria-label="状態フィルター">
+            <option value="all">すべて</option>
+          </select>
+        </div>
       </div>
-    </div>
 
-    <div class="sidebar-empty" id="sidebar-empty">
-      <div class="icon">📍</div>
-      <p>地図のピンをクリックすると<br>詳細情報が表示されます</p>
-    </div>
+      <div class="view-stage">
+        <section class="view active" id="view-map" aria-label="地図">
+          <div id="map"></div>
+        </section>
 
-    <div class="detail" id="detail-panel"></div>
-  </div>
+        <section class="view" id="view-network" aria-label="関係ネットワーク">
+          <div class="network-wrap">
+            <div class="network-summary" id="network-summary"></div>
+            <div class="network-stage">
+              <svg id="network-svg" role="img" aria-label="Sign relation network"></svg>
+            </div>
+          </div>
+        </section>
+
+        <section class="view canvas-view" id="view-stats" aria-label="統計">
+          <div class="viz-grid">
+            <div class="viz-panel full">
+              <div class="panel-body">
+                <div class="metric-row" id="metrics"></div>
+              </div>
+            </div>
+            <div class="viz-panel half">
+              <div class="panel-head">
+                <h2 class="panel-title">主要言語</h2>
+                <span class="panel-note">record count</span>
+              </div>
+              <div class="panel-body">
+                <div class="bar-list" id="lang-bars"></div>
+              </div>
+            </div>
+            <div class="viz-panel half">
+              <div class="panel-head">
+                <h2 class="panel-title">来源構成</h2>
+                <span class="panel-note">share</span>
+              </div>
+              <div class="panel-body">
+                <div class="donut-wrap">
+                  <svg class="donut" id="source-donut" viewBox="0 0 120 120"></svg>
+                  <div class="legend" id="source-legend"></div>
+                </div>
+              </div>
+            </div>
+            <div class="viz-panel two-thirds">
+              <div class="panel-head">
+                <h2 class="panel-title">採集日タイムライン</h2>
+                <span class="panel-note">daily records</span>
+              </div>
+              <div class="panel-body">
+                <div class="timeline" id="timeline"></div>
+              </div>
+            </div>
+            <div class="viz-panel third">
+              <div class="panel-head">
+                <h2 class="panel-title">担体類型</h2>
+                <span class="panel-note">top categories</span>
+              </div>
+              <div class="panel-body">
+                <div class="bar-list" id="carrier-bars"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view canvas-view" id="view-gallery" aria-label="写真一覧">
+          <div class="gallery-grid" id="gallery-grid"></div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="side-panel" id="side-panel">
+      <div class="side-head">
+        <h2 class="side-title" id="side-title">Record Detail</h2>
+        <button class="icon-btn mobile-detail-toggle" id="close-detail" title="閉じる">×</button>
+      </div>
+      <div class="side-scroll">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-mark">LL</div>
+          <p>地図、ネットワーク、写真カードからレコードを選択すると詳細を表示します。</p>
+        </div>
+        <div class="detail" id="detail-panel"></div>
+      </div>
+    </aside>
+  </main>
 </div>
 
 <script>
-// ── Map init ──
-const map = L.map('map', {
-  center: [35.6123, 139.3456],
-  zoom: 16,
-  zoomControl: true
-});
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO',
-  maxZoom: 19
-}).addTo(map);
-
-// ── Language colors ──
-const LANG_COLORS = {
-  '日本語': '#2980b9',
-  '中文':   '#e67e22',
-  '韓国語': '#27ae60',
-  '英語':   '#8e44ad',
-  'その他': '#7f8c8d',
+const FIELD = {
+  id: ['SignID', 'ImageID', 'ID'],
+  title: ['名称', 'Name'],
+  lat: ['緯度', 'lat', 'latitude'],
+  lng: ['経度', 'lng', 'longitude'],
+  lang: ['主要言語'],
+  subLang: ['補助言語'],
+  decoLang: ['装飾的言語'],
+  source: ['来源類型'],
+  status: ['_status'],
+  photo: ['写真ファイル名'],
+  photoId: ['写真ID'],
+  panorama: ['全景写真ファイル名'],
+  date: ['採集日時'],
+  location: ['位置描述'],
+  actor: ['設置主体'],
+  carrier: ['担体類型'],
+  relation: ['多言語関係'],
+  layer: ['層状性'],
+  time: ['時間性'],
+  readability: ['可読性'],
+  visibility: ['視認等級'],
+  audience: ['想定受容者'],
+  quality: ['制作品質'],
+  memo: ['備考'],
 };
 
-function getLangColor(lang) {
-  for (const [key, color] of Object.entries(LANG_COLORS)) {
-    if (lang && lang.includes(key)) return color;
+const COLORS = ['#2f76b7', '#b7781f', '#23835a', '#7552a8', '#c84b31', '#247b83', '#6d7278', '#8a623d'];
+const LANG_COLORS = {
+  '日本語': '#2f76b7',
+  '中文': '#b7781f',
+  '韓国語': '#23835a',
+  '英語': '#7552a8',
+  'その他': '#6d7278',
+};
+
+let map;
+let tileLayer;
+let markers = [];
+let allRows = [];
+let filteredRows = [];
+let activeLanguage = 'all';
+let activeSource = 'all';
+let activeStatus = 'all';
+let activeView = 'map';
+let selectedRow = null;
+let selectedMarker = null;
+
+function first(row, keys, fallback = '') {
+  for (const key of keys) {
+    const value = row[key];
+    if (value !== undefined && value !== null && String(value).trim() !== '') return String(value).trim();
   }
-  return '#95a5a6';
+  return fallback;
 }
 
-function getLangClass(lang) {
-  if (!lang) return '';
-  if (lang.includes('日本語')) return 'lang-ja';
-  if (lang.includes('中文')) return 'lang-zh';
-  if (lang.includes('韓国語')) return 'lang-ko';
-  if (lang.includes('英語')) return 'lang-en';
+function html(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
+}
+
+function norm(value) {
+  return String(value || '').trim();
+}
+
+function shortValue(value, fallback = '—') {
+  const text = norm(value);
+  if (!text || text === '—') return fallback;
+  return text;
+}
+
+function getId(row) {
+  return first(row, FIELD.id, '—');
+}
+
+function getLang(row) {
+  return shortValue(first(row, FIELD.lang), '未分類');
+}
+
+function getColorForValue(value) {
+  for (const [key, color] of Object.entries(LANG_COLORS)) {
+    if (value && value.includes(key)) return color;
+  }
+  const index = Math.abs([...String(value || '')].reduce((sum, ch) => sum + ch.charCodeAt(0), 0)) % COLORS.length;
+  return COLORS[index];
+}
+
+function getLangClass(value) {
+  if (!value) return 'other';
+  if (value.includes('日本語')) return 'ja';
+  if (value.includes('中文')) return 'zh';
+  if (value.includes('韓国語')) return 'ko';
+  if (value.includes('英語')) return 'en';
+  return 'other';
+}
+
+function sourceClass(value) {
+  if (value && value.includes('top')) return 'source-top';
+  if (value && value.includes('bottom')) return 'source-bottom';
   return '';
 }
 
-// ── Marker creation ──
-function makeIcon(color) {
+function countBy(rows, getter) {
+  const counts = new Map();
+  rows.forEach(row => {
+    const key = shortValue(getter(row), '未分類');
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ja'));
+}
+
+function initMap() {
+  map = L.map('map', {
+    center: [35.5972, 139.3422],
+    zoom: 16,
+    zoomControl: true,
+  });
+
+  tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO',
+    maxZoom: 19,
+  }).addTo(map);
+}
+
+function makeMarkerIcon(color, active = false) {
   return L.divIcon({
     className: '',
-    html: `<div class="marker-dot" style="background:${color}"></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
+    html: `<div class="marker-dot ${active ? 'active' : ''}" style="background:${color}"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
   });
 }
 
-// ── State ──
-let allData = [];
-let markers = [];
-let activeFilter = 'all';
-let activeMarker = null;
-
-// ── Render detail panel ──
-function renderDetail(row) {
-  const panel = document.getElementById('detail-panel');
-  const empty = document.getElementById('sidebar-empty');
-
-  // Photo
-  const photoFile = row['写真ファイル名'] ? row['写真ファイル名'].trim() : '';
-  const photoHTML = photoFile && photoFile !== '—'
-    ? `<div class="detail-photo"><img src="photos/${photoFile}" alt="${row['名称'] || ''}" onerror="this.parentElement.innerHTML='<div class=\\'photo-placeholder\\'><span>📷</span><p>${photoFile}</p></div>'"></div>`
-    : `<div class="photo-placeholder"><span>📷</span><p>写真なし</p></div>`;
-
-  // Language tags
-  const langs = ['主要言語','補助言語','装飾的言語'].map(k => {
-    const v = row[k];
-    if (!v || v === '—') return '';
-    return `<span class="tag ${getLangClass(v)}">${v}</span>`;
-  }).join('');
-
-  // Source tag
-  const src = row['来源類型'] || '';
-  const srcClass = src.includes('top') ? 'top-down' : src.includes('bottom') ? 'bottom-up' : '';
-
-  panel.innerHTML = `
-    ${photoHTML}
-    <div class="detail-body">
-      <div class="detail-id">${row['SignID'] || row['ImageID'] || row['ID'] || '—'}</div>
-      <div class="detail-title">${row['名称'] || '名称不明'}</div>
-      <div class="detail-location">📍 ${row['位置描述'] || '—'}</div>
-
-      <div class="detail-section">
-        <div class="detail-section-title">言語構成</div>
-        <div class="tag-group">${langs || '<span class="tag">—</span>'}</div>
-        <div class="field-row">
-          <span class="field-label">多言語関係</span>
-          <span class="field-value">${row['多言語関係'] || '—'}</span>
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-section-title">属性</div>
-        <div class="field-row">
-          <span class="field-label">設置主体</span>
-          <span class="field-value">${row['設置主体'] || '—'}</span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">担体類型</span>
-          <span class="field-value">${row['担体類型'] || '—'}</span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">時間性</span>
-          <span class="field-value">${row['時間性'] || '—'}</span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">可読性</span>
-          <span class="field-value">${row['可読性'] || '—'}</span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">来源</span>
-          <span class="field-value"><span class="tag ${srcClass}" style="font-size:10px">${src || '—'}</span></span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">視認等級</span>
-          <span class="field-value">${row['視認等級'] || '—'}</span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">想定受容者</span>
-          <span class="field-value">${row['想定受容者'] || '—'}</span>
-        </div>
-        <div class="field-row">
-          <span class="field-label">採集日時</span>
-          <span class="field-value">${row['採集日時'] || '—'}</span>
-        </div>
-      </div>
-
-      ${row['備考'] ? `
-      <div class="detail-section">
-        <div class="detail-section-title">採集者メモ</div>
-        <div class="memo-box">${row['備考']}</div>
-      </div>` : ''}
-    </div>
-  `;
-
-  empty.style.display = 'none';
-  panel.classList.add('active');
+function clearMarkers() {
+  markers.forEach(item => map.removeLayer(item.marker));
+  markers = [];
+  selectedMarker = null;
 }
 
-// ── Filter ──
-function applyFilter(lang) {
-  activeFilter = lang;
-  document.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('active', c.dataset.filter === lang);
+function renderMap() {
+  if (!map) return;
+  clearMarkers();
+  const bounds = [];
+
+  filteredRows.forEach(row => {
+    const lat = parseFloat(first(row, FIELD.lat));
+    const lng = parseFloat(first(row, FIELD.lng));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const color = getColorForValue(getLang(row));
+    const marker = L.marker([lat, lng], { icon: makeMarkerIcon(color) });
+    marker.on('click', () => selectRow(row, { focusMap: true, marker }));
+    marker.bindPopup(`<strong>${html(getId(row))}</strong><br>${html(first(row, FIELD.title, '名称不明'))}`);
+    marker.addTo(map);
+    markers.push({ marker, row, color });
+    bounds.push([lat, lng]);
   });
 
-  markers.forEach(({ marker, row }) => {
-    const show = lang === 'all' || (row['主要言語'] && row['主要言語'].includes(lang));
-    if (show) marker.addTo(map);
-    else map.removeLayer(marker);
-  });
-
-  document.getElementById('count-badge').textContent =
-    (lang === 'all' ? allData.length : allData.filter(r => r['主要言語'] && r['主要言語'].includes(lang)).length) + ' 件';
+  if (bounds.length > 1) map.fitBounds(bounds, { padding: [36, 36] });
+  else if (bounds.length === 1) map.setView(bounds[0], 17);
 }
 
-// ── Build filter chips ──
-function buildFilters(data) {
-  const langs = new Set();
-  data.forEach(r => { if (r['主要言語']) langs.add(r['主要言語']); });
+function updateMarkerSelection(marker) {
+  if (selectedMarker) {
+    const previous = markers.find(item => item.marker === selectedMarker);
+    if (previous) previous.marker.setIcon(makeMarkerIcon(previous.color, false));
+  }
+  selectedMarker = marker || null;
+  if (selectedMarker) {
+    const current = markers.find(item => item.marker === selectedMarker);
+    if (current) selectedMarker.setIcon(makeMarkerIcon(current.color, true));
+  }
+}
 
-  const container = document.getElementById('filter-chips');
-  container.innerHTML = '<button class="chip active" data-filter="all">すべて</button>';
-  langs.forEach(lang => {
+function buildFilters() {
+  const languages = countBy(allRows, row => getLang(row)).map(([name]) => name);
+  const languageBox = document.getElementById('language-filters');
+  languageBox.innerHTML = '<button class="chip active" data-filter="all">すべて</button>';
+  languages.forEach(lang => {
     const btn = document.createElement('button');
     btn.className = 'chip';
     btn.dataset.filter = lang;
     btn.textContent = lang;
-    btn.style.borderColor = getLangColor(lang);
-    btn.addEventListener('click', () => applyFilter(lang));
-    container.appendChild(btn);
+    btn.style.borderColor = getColorForValue(lang);
+    btn.addEventListener('click', () => {
+      activeLanguage = lang;
+      applyFilters();
+    });
+    languageBox.appendChild(btn);
+  });
+  languageBox.querySelector('[data-filter="all"]').addEventListener('click', () => {
+    activeLanguage = 'all';
+    applyFilters();
   });
 
-  document.querySelector('[data-filter="all"]').addEventListener('click', () => applyFilter('all'));
+  fillSelect('source-filter', countBy(allRows, row => first(row, FIELD.source)).map(([name]) => name), value => {
+    activeSource = value;
+    applyFilters();
+  });
+  fillSelect('status-filter', countBy(allRows, row => first(row, FIELD.status)).map(([name]) => name), value => {
+    activeStatus = value;
+    applyFilters();
+  });
 }
 
-// ── Load CSV ──
-function loadCSV(csvText) {
-  const result = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-  allData = result.data.filter(row => Object.values(row).some(v => String(v || '').trim()));
+function fillSelect(id, values, onChange) {
+  const select = document.getElementById(id);
+  select.innerHTML = '<option value="all">すべて</option>';
+  values.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  select.onchange = () => onChange(select.value);
+}
 
-  document.getElementById('count-badge').textContent = allData.length + ' 件';
-  buildFilters(allData);
+function applyFilters() {
+  document.querySelectorAll('#language-filters .chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.filter === activeLanguage);
+  });
 
-  const bounds = [];
+  filteredRows = allRows.filter(row => {
+    const langOk = activeLanguage === 'all' || getLang(row) === activeLanguage;
+    const sourceOk = activeSource === 'all' || shortValue(first(row, FIELD.source), '未分類') === activeSource;
+    const statusOk = activeStatus === 'all' || shortValue(first(row, FIELD.status), '未分類') === activeStatus;
+    return langOk && sourceOk && statusOk;
+  });
 
-  allData.forEach(row => {
-    const lat = parseFloat(row['緯度']);
-    const lng = parseFloat(row['経度']);
-    if (isNaN(lat) || isNaN(lng)) return;
+  document.getElementById('count-badge').textContent = filteredRows.length;
+  renderCurrentView();
+}
 
-    const color = getLangColor(row['主要言語']);
-    const marker = L.marker([lat, lng], { icon: makeIcon(color) });
+function renderCurrentView() {
+  if (activeView === 'map') {
+    renderMap();
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+  if (activeView === 'network') renderNetwork();
+  if (activeView === 'stats') renderStats();
+  if (activeView === 'gallery') renderGallery();
+}
 
-    marker.on('click', () => {
-      if (activeMarker) {
-        activeMarker.setIcon(makeIcon(getLangColor(activeMarker._row['主要言語'])));
+function switchView(view) {
+  activeView = view;
+  document.querySelectorAll('.view-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+  document.querySelectorAll('.view').forEach(panel => panel.classList.toggle('active', panel.id === `view-${view}`));
+  renderCurrentView();
+}
+
+function selectRow(row, options = {}) {
+  selectedRow = row;
+  renderDetail(row);
+  document.getElementById('side-panel').classList.add('open');
+
+  if (options.marker) updateMarkerSelection(options.marker);
+  else updateMarkerSelection(null);
+
+  if (options.focusMap && map) {
+    const lat = parseFloat(first(row, FIELD.lat));
+    const lng = parseFloat(first(row, FIELD.lng));
+    if (Number.isFinite(lat) && Number.isFinite(lng)) map.panTo([lat, lng]);
+  }
+}
+
+function renderDetail(row) {
+  const empty = document.getElementById('empty-state');
+  const panel = document.getElementById('detail-panel');
+  const title = first(row, FIELD.title, '名称不明');
+  const photo = first(row, FIELD.photo);
+  const source = first(row, FIELD.source);
+  const langs = [first(row, FIELD.lang), first(row, FIELD.subLang), first(row, FIELD.decoLang)]
+    .filter(v => v && v !== '—')
+    .map(v => `<span class="tag ${getLangClass(v)}">${html(v)}</span>`)
+    .join('');
+
+  const fields = [
+    ['写真ID', first(row, FIELD.photoId)],
+    ['全景写真', first(row, FIELD.panorama)],
+    ['設置主体', first(row, FIELD.actor)],
+    ['担体類型', first(row, FIELD.carrier)],
+    ['来源', source],
+    ['多言語関係', first(row, FIELD.relation)],
+    ['層状性', first(row, FIELD.layer)],
+    ['時間性', first(row, FIELD.time)],
+    ['可読性', first(row, FIELD.readability)],
+    ['視認等級', first(row, FIELD.visibility)],
+    ['想定受容者', first(row, FIELD.audience)],
+    ['制作品質', first(row, FIELD.quality)],
+    ['採集日時', first(row, FIELD.date)],
+  ];
+
+  panel.innerHTML = `
+    <div class="detail-photo">
+      ${photo ? `<img src="photos/${encodeURIComponent(photo)}" alt="${html(title)}" onerror="this.outerHTML='<span>${html(photo)}</span>'">` : '<span>No Photo</span>'}
+    </div>
+    <div class="detail-body">
+      <div class="detail-id">${html(getId(row))}</div>
+      <div class="detail-title">${html(title)}</div>
+      <div class="detail-sub">${html(first(row, FIELD.location, '位置描述なし'))}</div>
+      <div class="section">
+        <div class="section-title">Language</div>
+        <div class="tag-row">${langs || '<span class="tag">未分類</span>'}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Attributes</div>
+        <div class="field-list">
+          ${fields.map(([label, value]) => `
+            <div class="field">
+              <div class="field-label">${html(label)}</div>
+              <div class="field-value">${source && label === '来源' ? `<span class="tag ${sourceClass(source)}">${html(shortValue(value))}</span>` : html(shortValue(value))}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ${first(row, FIELD.memo) ? `
+        <div class="section">
+          <div class="section-title">Memo</div>
+          <div class="memo">${html(first(row, FIELD.memo))}</div>
+        </div>` : ''}
+    </div>
+  `;
+  document.getElementById('side-title').textContent = getId(row);
+  empty.style.display = 'none';
+  panel.classList.add('active');
+}
+
+function renderStats() {
+  const rows = filteredRows;
+  const geoCount = rows.filter(row => Number.isFinite(parseFloat(first(row, FIELD.lat))) && Number.isFinite(parseFloat(first(row, FIELD.lng)))).length;
+  const photoCount = rows.filter(row => first(row, FIELD.photo)).length;
+  const reviewed = rows.filter(row => first(row, FIELD.status).includes('reviewed')).length;
+  const languageCount = countBy(rows, row => getLang(row)).length;
+
+  document.getElementById('metrics').innerHTML = [
+    ['Records', rows.length],
+    ['With GPS', geoCount],
+    ['Photos', photoCount],
+    ['Languages', languageCount],
+  ].map(([label, value]) => `
+    <div class="metric">
+      <div class="metric-value">${value}</div>
+      <div class="metric-label">${label}</div>
+    </div>
+  `).join('');
+
+  renderBars('lang-bars', countBy(rows, row => getLang(row)), value => getColorForValue(value), 8);
+  renderBars('carrier-bars', countBy(rows, row => first(row, FIELD.carrier)), () => '#247b83', 7);
+  renderDonut(countBy(rows, row => first(row, FIELD.source)));
+  renderTimeline(rows);
+}
+
+function renderBars(id, entries, colorFn, limit = 8) {
+  const box = document.getElementById(id);
+  const top = entries.slice(0, limit);
+  const max = Math.max(1, ...top.map(([, value]) => value));
+  box.innerHTML = top.length ? top.map(([label, value]) => `
+    <div class="bar-row">
+      <div class="bar-label" title="${html(label)}">${html(label)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, value / max * 100)}%;background:${colorFn(label)}"></div></div>
+      <div class="bar-value">${value}</div>
+    </div>
+  `).join('') : '<div class="panel-note">No data</div>';
+}
+
+function renderDonut(entries) {
+  const svg = document.getElementById('source-donut');
+  const legend = document.getElementById('source-legend');
+  const total = entries.reduce((sum, [, count]) => sum + count, 0);
+  const radius = 46;
+  const cx = 60;
+  const cy = 60;
+  let angle = -90;
+  svg.innerHTML = '';
+
+  if (!total) {
+    svg.innerHTML = '<circle cx="60" cy="60" r="42" fill="none" stroke="#ded8ce" stroke-width="18"></circle>';
+    legend.innerHTML = '<div class="panel-note">No data</div>';
+    return;
+  }
+
+  entries.forEach(([label, count], index) => {
+    const span = count / total * 360;
+    const end = angle + span;
+    const large = span > 180 ? 1 : 0;
+    const startPoint = polar(cx, cy, radius, angle);
+    const endPoint = polar(cx, cy, radius, end);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${startPoint.x} ${startPoint.y} A ${radius} ${radius} 0 ${large} 1 ${endPoint.x} ${endPoint.y}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', COLORS[index % COLORS.length]);
+    path.setAttribute('stroke-width', '18');
+    path.setAttribute('stroke-linecap', 'butt');
+    svg.appendChild(path);
+    angle = end;
+  });
+
+  const center = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  center.setAttribute('x', '60');
+  center.setAttribute('y', '64');
+  center.setAttribute('text-anchor', 'middle');
+  center.setAttribute('font-size', '18');
+  center.setAttribute('font-family', 'DM Mono, monospace');
+  center.setAttribute('fill', '#1e2328');
+  center.textContent = total;
+  svg.appendChild(center);
+
+  legend.innerHTML = entries.map(([label, count], index) => `
+    <div class="legend-row">
+      <span class="legend-dot" style="background:${COLORS[index % COLORS.length]}"></span>
+      <span>${html(label)}</span>
+      <span>${count}</span>
+    </div>
+  `).join('');
+}
+
+function polar(cx, cy, r, angle) {
+  const rad = (angle - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function renderTimeline(rows) {
+  const entries = countBy(rows, row => {
+    const raw = first(row, FIELD.date);
+    return raw ? raw.slice(0, 10) : '日付なし';
+  }).sort((a, b) => a[0].localeCompare(b[0]));
+  const max = Math.max(1, ...entries.map(([, value]) => value));
+  const timeline = document.getElementById('timeline');
+  timeline.innerHTML = entries.length ? entries.map(([label, value]) => `
+    <div class="time-col" title="${html(label)}: ${value}">
+      <div class="time-bar" style="height:${Math.max(4, value / max * 168)}px"></div>
+      <div class="time-label">${html(label)}</div>
+    </div>
+  `).join('') : '<div class="panel-note">No date data</div>';
+}
+
+function renderGallery() {
+  const grid = document.getElementById('gallery-grid');
+  grid.innerHTML = filteredRows.map(row => {
+    const photo = first(row, FIELD.photo);
+    const title = first(row, FIELD.title, '名称不明');
+    const lang = getLang(row);
+    const source = first(row, FIELD.source);
+    return `
+      <article class="photo-card" data-id="${html(getId(row))}">
+        <div class="photo-thumb">
+          ${photo ? `<img src="photos/${encodeURIComponent(photo)}" alt="${html(title)}" loading="lazy" onerror="this.outerHTML='<span>${html(photo)}</span>'">` : '<span>No Photo</span>'}
+        </div>
+        <div class="photo-meta">
+          <div class="photo-id">${html(getId(row))}</div>
+          <div class="photo-title">${html(title)}</div>
+          <div class="photo-tags">
+            <span class="tag ${getLangClass(lang)}">${html(lang)}</span>
+            ${source ? `<span class="tag ${sourceClass(source)}">${html(source)}</span>` : ''}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.photo-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const row = filteredRows.find(item => getId(item) === card.dataset.id);
+      if (row) selectRow(row);
+    });
+  });
+}
+
+function renderNetwork() {
+  const svg = document.getElementById('network-svg');
+  const stage = svg.parentElement;
+  const width = Math.max(320, stage.clientWidth || 900);
+  const height = Math.max(360, stage.clientHeight || 620);
+  const rows = filteredRows.slice(0, 180);
+  const nodes = [];
+  const nodeMap = new Map();
+  const links = [];
+
+  function node(id, label, type, color, weight = 1) {
+    if (nodeMap.has(id)) {
+      nodeMap.get(id).weight += weight;
+      return nodeMap.get(id);
+    }
+    const item = {
+      id,
+      label,
+      type,
+      color,
+      weight,
+      x: width / 2 + (Math.random() - 0.5) * width * 0.42,
+      y: height / 2 + (Math.random() - 0.5) * height * 0.42,
+      vx: 0,
+      vy: 0,
+    };
+    nodeMap.set(id, item);
+    nodes.push(item);
+    return item;
+  }
+
+  rows.forEach(row => {
+    const sign = node(`sign:${getId(row)}`, getId(row), 'sign', '#22272d', 1);
+    const lang = node(`lang:${getLang(row)}`, getLang(row), 'lang', getColorForValue(getLang(row)), 2);
+    links.push([sign, lang]);
+
+    const source = first(row, FIELD.source);
+    if (source) links.push([sign, node(`source:${source}`, source, 'source', source.includes('bottom') ? '#23835a' : '#c84b31', 1.5)]);
+
+    const actor = first(row, FIELD.actor);
+    if (actor) links.push([sign, node(`actor:${actor}`, actor, 'actor', '#247b83', 1.2)]);
+
+    const carrier = first(row, FIELD.carrier);
+    if (carrier) links.push([sign, node(`carrier:${carrier}`, carrier, 'carrier', '#7552a8', 1)]);
+  });
+
+  runLayout(nodes, links, width, height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.innerHTML = `
+    <g>
+      ${links.map(([a, b]) => `<line class="net-link" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"></line>`).join('')}
+    </g>
+    <g>
+      ${nodes.map(n => {
+        const r = Math.min(22, n.type === 'sign' ? 4 + Math.sqrt(n.weight) : 8 + Math.sqrt(n.weight) * 2.2);
+        return `
+          <g class="net-node" data-id="${html(n.id)}">
+            <circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${n.color}" opacity="${n.type === 'sign' ? '0.82' : '0.95'}"></circle>
+            ${n.type !== 'sign' || n.weight > 1 ? `<text class="net-label" x="${(n.x + r + 4).toFixed(1)}" y="${(n.y + 4).toFixed(1)}">${html(n.label)}</text>` : ''}
+          </g>
+        `;
+      }).join('')}
+    </g>
+  `;
+
+  svg.querySelectorAll('.net-node').forEach(group => {
+    group.addEventListener('click', () => {
+      const id = group.dataset.id || '';
+      if (!id.startsWith('sign:')) return;
+      const row = rows.find(item => `sign:${getId(item)}` === id);
+      if (row) selectRow(row);
+    });
+  });
+
+  document.getElementById('network-summary').innerHTML = [
+    ['Records', rows.length],
+    ['Nodes', nodes.length],
+    ['Links', links.length],
+    ['Shown', rows.length < filteredRows.length ? `${rows.length}/${filteredRows.length}` : rows.length],
+  ].map(([label, value]) => `<div class="network-badge">${label}: ${value}</div>`).join('');
+}
+
+function runLayout(nodes, links, width, height) {
+  if (!nodes.length) return;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  for (let step = 0; step < 120; step++) {
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i];
+        const b = nodes[j];
+        const dx = a.x - b.x || 0.01;
+        const dy = a.y - b.y || 0.01;
+        const dist2 = dx * dx + dy * dy;
+        const force = Math.min(900 / dist2, 0.9);
+        a.vx += dx * force;
+        a.vy += dy * force;
+        b.vx -= dx * force;
+        b.vy -= dy * force;
       }
-      marker.setIcon(L.divIcon({
-        className: '',
-        html: `<div class="marker-dot" style="background:${color};transform:scale(1.6);border-color:${color}"></div>`,
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
-      }));
-      activeMarker = marker;
-      activeMarker._row = row;
-      renderDetail(row);
-      map.panTo([lat, lng]);
+    }
+
+    links.forEach(([a, b]) => {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const desired = a.type === 'sign' ? 82 : 120;
+      const force = (dist - desired) * 0.006;
+      const fx = dx / dist * force;
+      const fy = dy / dist * force;
+      a.vx += fx;
+      a.vy += fy;
+      b.vx -= fx;
+      b.vy -= fy;
     });
 
-    marker._row = row;
-    marker.addTo(map);
-    markers.push({ marker, row });
-    bounds.push([lat, lng]);
-  });
-
-  if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40] });
-  else if (bounds.length === 1) map.setView(bounds[0], 17);
+    nodes.forEach(n => {
+      n.vx += (centerX - n.x) * 0.002;
+      n.vy += (centerY - n.y) * 0.002;
+      n.x += n.vx;
+      n.y += n.vy;
+      n.vx *= 0.78;
+      n.vy *= 0.78;
+      n.x = Math.max(32, Math.min(width - 120, n.x));
+      n.y = Math.max(32, Math.min(height - 32, n.y));
+    });
+  }
 }
 
-// ── CSVファイルを手動で読み込む ──
+function loadCSV(csvText) {
+  const result = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+  allRows = result.data.filter(row => Object.values(row).some(v => norm(v)));
+  filteredRows = allRows.slice();
+  activeLanguage = 'all';
+  activeSource = 'all';
+  activeStatus = 'all';
+  selectedRow = null;
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('detail-panel').classList.remove('active');
+  document.getElementById('detail-panel').innerHTML = '';
+  buildFilters();
+  applyFilters();
+}
+
 function loadCSVFile(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
-    // 既存のマーカーをクリア
-    markers.forEach(({marker}) => map.removeLayer(marker));
-    markers = []; allData = [];
-    document.getElementById('filter-chips').innerHTML = '<button class="chip active" data-filter="all">すべて</button>';
-    document.getElementById('detail-panel').classList.remove('active');
-    document.getElementById('sidebar-empty').style.display = '';
-    loadCSV(e.target.result);
-  };
+  reader.onload = e => loadCSV(e.target.result);
   reader.readAsText(file, 'UTF-8');
   event.target.value = '';
 }
 
-// ── Load data.csv (same folder) ──
+function loadFallbackData() {
+  const sampleCSV = `SignID,_status,写真ID,写真ファイル名,全景写真ファイル名,緯度,経度,採集日時,名称,主要言語,補助言語,装飾的言語,設置主体,担体類型,時間性,可読性,来源類型,視認等級,位置描述,多言語関係,想定受容者,制作品質,備考
+NKG-S001-a,reviewed,NKG-20260601-001,NKG-001.jpg,,35.612300,139.345600,2026-06-01 10:32,PayPay決済ステッカー,日本語,中文,英語(装飾),商業,貼付物(ステッカー),常設,完全可読,top-down(標準化),歩行可読(<5m),店舗入口ガラス面,平行型,本地住民,専門印刷,決済サービスの多言語表示
+NKG-S002-a,reviewed,NKG-20260601-002,NKG-002.jpg,,35.612500,139.345800,2026-06-01 10:45,手書き営業時間メモ,日本語,—,—,個人/非正式,貼付物(手書き),常設,完全可読,bottom-up(ローカル自作),歩行可読(<5m),電柱・目線高さ,単言語型,本地住民,手書き,営業時間メモ
+NKG-S003-a,reviewed,NKG-20260601-003,NKG-003.jpg,,35.613000,139.346100,2026-06-01 11:02,バス停多言語案内,日本語,中文・韓国語,—,行政/公共機関,建物固定(掲示板),常設,完全可読,top-down(標準化),近距可読(5-15m),バス停掲示板,補完型,観光客・外国人,専門印刷,観光客向け案内
+NKG-S004-a,pending,NKG-20260601-004,NKG-004.jpg,,35.612800,139.346200,2026-06-01 11:15,屋台車側面,日本語,—,英語(ブランド名),商業,移動物体(停車中),臨時/季節的,部分可読,bottom-up(ローカル自作),歩行可読(<5m),駐車場内・車両側面,象徴型,本地住民,半専門(印刷),移動販売`;
+  loadCSV(sampleCSV);
+}
+
+document.querySelectorAll('.view-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchView(btn.dataset.view));
+});
+
+document.getElementById('mobile-detail-toggle').addEventListener('click', () => {
+  document.getElementById('side-panel').classList.toggle('open');
+});
+
+document.getElementById('close-detail').addEventListener('click', () => {
+  document.getElementById('side-panel').classList.remove('open');
+});
+
+window.addEventListener('resize', () => {
+  if (activeView === 'map' && map) setTimeout(() => map.invalidateSize(), 80);
+  if (activeView === 'network') renderNetwork();
+});
+
+initMap();
 fetch('data.csv')
-  .then(r => r.text())
+  .then(response => {
+    if (!response.ok) throw new Error('data.csv not found');
+    return response.text();
+  })
   .then(loadCSV)
-  .catch(() => {
-    // Fallback: load sample data inline
-    const sampleCSV = `ID,名称,緯度,経度,採集日時,主要言語,補助言語,装飾的言語,設置主体,担体類型,時間性,可読性,来源類型,視認等級,位置描述,多言語関係,想定受容者,制作品質,写真ファイル名,備考
-NKG-001,PayPay決済ステッカー,35.612300,139.345600,2026-06-01 10:32,日本語,中文,英語(装飾),商業,貼付物(ステッカー),常設,完全可読,top-down(標準化),歩行可読(<5m),コンビニ入口左ガラス面,平行型,本地住民,専門印刷,NKG-001.jpg,PayPay/Alipay/LINE Pay対応ステッカー
-NKG-002,手書き営業時間メモ,35.612500,139.345800,2026-06-01 10:45,日本語,—,—,個人/非正式,貼付物(手書き),常設,完全可読,bottom-up(ローカル自作),歩行可読(<5m),電柱・目線高さ,単言語型,本地住民,手書き,NKG-002.jpg,手書き営業時間メモ
-NKG-003,バス停多言語案内,35.613000,139.346100,2026-06-01 11:02,日本語,中文・韓国語,—,行政/公共機関,建物固定(掲示板),常設,完全可読,top-down(標準化),近距可読(5-15m),バス停掲示板,補完型,観光客・外国人,専門印刷,NKG-003.jpg,多言語案内
-NKG-004,たこ焼き屋台,35.612800,139.346200,2026-06-01 11:15,日本語,—,英語(ブランド名),商業,移動物体(停車中),臨時,部分可読,bottom-up(ローカル自作),歩行可読(<5m),駐車場内・屋台車側面,象徴型,本地住民,半専門(印刷),NKG-004.jpg,たこ焼き屋台
-NKG-005,選挙ポスター,35.613200,139.346500,2026-06-01 11:30,日本語,—,—,行政/公共機関,貼付物(ポスター),臨時/季節的,完全可読,top-down(標準化),歩行可読(<5m),電柱・選挙ポスター掲示板,単言語型,本地住民,専門印刷,NKG-005.jpg,選挙ポスター`;
-    loadCSV(sampleCSV);
-  });
+  .catch(loadFallbackData);
 </script>
 </body>
 </html>
